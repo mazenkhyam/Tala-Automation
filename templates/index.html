@@ -996,21 +996,75 @@ function renderTxRow(t){
     </div>`;
   }
 
-  const amt=t.amount>0?`<span style="color:var(--success);font-weight:600">+${fmtNum(Math.abs(t.amount))}</span>`:`<span style="color:var(--danger);font-weight:600">-${fmtNum(Math.abs(t.amount))}</span>`;
-  return `<div class="journal-row ${lvl}" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 0">
-    <div style="min-width:75px;font-size:11px;color:var(--muted)">${t.date}</div>
-    <div style="flex:2;min-width:160px;font-size:12px" title="${t.bank_desc}">${t.bank_desc.substring(0,40)}</div>
-    <div style="min-width:90px;text-align:left">${amt}</div>
-    <div style="flex:1;min-width:140px;font-size:12px;color:var(--text)">${t.sys_name||'<span style="color:var(--danger)">غير محدد</span>'}</div>
-    <div>${confBadge} <span style="font-size:12px">${meth}</span></div>
-    <div style="margin-right:auto;display:flex;gap:6px">
-      <button class="btn sm" onclick="startTxEdit(${t.idx})">تعديل</button>
-      ${t.approved
-        ?`<button class="btn sm" style="color:var(--success);border-color:var(--success)" onclick="toggleApprove(${t.idx})">✓ معتمد</button>`
-        :`<button class="btn sm grn" onclick="toggleApprove(${t.idx})">اعتماد</button>`}
-      <button class="btn sm danger" onclick="deleteTx(${t.idx})">حذف</button>
+  const previewLines = previewJournalLines(t);
+  const memo = previewLines.length ? previewLines[0].memo : t.bank_desc;
+
+  return `<div class="journal-row ${lvl}" style="display:flex;flex-direction:column;gap:6px;padding:8px 0;border-bottom:0.5px solid var(--border)">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div style="min-width:75px;font-size:11px;color:var(--muted)">${t.date}</div>
+      <div style="flex:1;min-width:160px;font-size:12px;font-weight:600;color:var(--text)">${memo}</div>
+      <div>${confBadge} <span style="font-size:12px">${meth}</span></div>
+      <div style="margin-right:auto;display:flex;gap:6px">
+        <button class="btn sm" onclick="startTxEdit(${t.idx})">تعديل</button>
+        ${t.approved
+          ?`<button class="btn sm" style="color:var(--success);border-color:var(--success)" onclick="toggleApprove(${t.idx})">✓ معتمد</button>`
+          :`<button class="btn sm grn" onclick="toggleApprove(${t.idx})">اعتماد</button>`}
+        <button class="btn sm danger" onclick="deleteTx(${t.idx})">حذف</button>
+      </div>
+    </div>
+    <div style="background:#010409;border-radius:8px;padding:8px 10px;font-size:11px">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="color:var(--muted)"><th style="text-align:right;padding:2px 6px">الحساب</th><th style="text-align:left;padding:2px 6px;width:100px">مدين</th><th style="text-align:left;padding:2px 6px;width:100px">دائن</th></tr></thead>
+        <tbody>
+          ${previewLines.map(l=>`<tr>
+            <td style="padding:2px 6px">${l.account_name}</td>
+            <td style="padding:2px 6px;color:var(--danger)">${l.debit?fmtNum(l.debit):''}</td>
+            <td style="padding:2px 6px;color:var(--success)">${l.credit?fmtNum(l.credit):''}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <div style="margin-top:4px;font-size:10px;color:var(--muted)" title="${t.bank_desc}">${t.bank_desc.substring(0,90)}</div>
     </div>
   </div>`;
+}
+
+// نمط استخراج رسم التحويل البنكي وضريبته من نص الحركة (نفس منطق matcher.py)
+const FEE_PATTERN = /(?:CHARGE|FEES?|FEE)\s*SAR\s*([\d.]+).{0,40}?VAT\s*SAR\s*([\d.]+)/is;
+
+function extractBankFee(bankDesc){
+  const m = FEE_PATTERN.exec(bankDesc||'');
+  if(m) return {fee: parseFloat(m[1])||0, vat: parseFloat(m[2])||0};
+  return {fee:0, vat:0};
+}
+
+function buildMemo(entityType, sysName, bankDesc){
+  if(entityType==='supplier' && sysName) return 'دفع الى '+sysName;
+  if(entityType==='customer' && sysName) return 'تحصيل من '+sysName;
+  return bankDesc;
+}
+
+// معاينة سطور القيد الكامل لعملية واحدة في شاشة المراجعة (نفس منطق build_journal_lines في matcher.py)
+function previewJournalLines(t){
+  const acc = t.acc_link || '111700 - Bank Clearance Account';
+  const accName = acc.includes(' - ') ? acc.split(' - ').slice(1).join(' - ') : acc;
+  const bankAcc = t.bank_account || '51000 - Bank Alinma';
+  const bankName = bankAcc.includes(' - ') ? bankAcc.split(' - ').slice(1).join(' - ') : bankAcc;
+  const memo = buildMemo(t.entity_type, t.sys_name, t.bank_desc);
+  const lines=[];
+
+  if(t.amount > 0){
+    lines.push({account_name: bankName, debit: t.amount, credit: 0, memo});
+    lines.push({account_name: accName, debit: 0, credit: t.amount, memo});
+  } else {
+    const {fee, vat} = extractBankFee(t.bank_desc);
+    const bankTotal = Math.abs(t.amount);
+    const vendorNet = Math.round((bankTotal - fee - vat)*100)/100;
+    lines.push({account_name: accName, debit: vendorNet, credit: 0, memo});
+    if(fee>0) lines.push({account_name: 'Bank charges', debit: fee, credit: 0, memo:'BC- '+memo});
+    if(vat>0) lines.push({account_name: 'VAT Payable', debit: vat, credit: 0, memo:'VAT- '+memo});
+    lines.push({account_name: bankName, debit: 0, credit: bankTotal, memo});
+  }
+  return lines;
 }
 
 let _openDays=new Set();
