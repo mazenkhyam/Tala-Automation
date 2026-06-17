@@ -186,6 +186,20 @@ def match_entity(bank_desc: str, master: list) -> dict:
     }
 
 
+def build_memo(entity_type: str, sys_name: str, bank_desc: str) -> str:
+    """
+    يبني البيان (الشرح) الثابت للقيد حسب نوع الطرف:
+      - مورد  → "دفع الى [اسم المورد كما في النظام]"
+      - عميل  → "تحصيل من [اسم العميل كما في النظام]"
+      - غير ذلك (رسوم/رواتب/حكومي/غير محدد) → النص الكامل لوصف البنك
+    """
+    if entity_type == 'supplier' and sys_name:
+        return f"دفع الى {sys_name}"
+    if entity_type == 'customer' and sys_name:
+        return f"تحصيل من {sys_name}"
+    return bank_desc
+
+
 def build_journal_lines(tx: dict, bank_account: str, match: dict) -> list:
     """
     يبني سطور القيد المحاسبي لكل عملية بنكية.
@@ -197,12 +211,18 @@ def build_journal_lines(tx: dict, bank_account: str, match: dict) -> list:
       - إن وُجد رسم تحويل بنكي وضريبته داخل نص الحركة (extract_bank_fee)،
         يُضاف سطر مستقل لرسوم البنك بنفس المبلغ المستخرج من النص، وضريبته
         كسطر VAT Payable صغير مستقل — وليس 15% من كامل المبلغ.
+
+    قاعدة البيان (الشرح):
+      - مورد: "دفع الى [الاسم كما في النظام]"
+      - عميل: "تحصيل من [الاسم كما في النظام]"
+      - غير ذلك: نص وصف البنك الكامل كما هو
     """
     amount = float(tx.get('amount', 0))
     date = tx.get('date', '')
-    memo = tx.get('memo') or match.get('sys_name', '') or tx.get('bank_desc', '')
-    location = tx.get('location', '')
     entity = match.get('sys_name', '')
+    entity_type = match.get('entity_type', 'unknown')
+    memo = build_memo(entity_type, entity, tx.get('bank_desc', ''))
+    location = tx.get('location', '')
     acc_link = match.get('acc_link', '111700 - Bank Clearance Account')
     acc_code = acc_link.split(' - ')[0] if ' - ' in acc_link else acc_link
     acc_name = acc_link.split(' - ', 1)[1] if ' - ' in acc_link else acc_link
