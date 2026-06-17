@@ -11,7 +11,7 @@ from io import BytesIO
 
 from flask import Flask, render_template, request, jsonify, send_file
 
-from statement_parser import parse_statement
+from parser import parse_statement
 from matcher import match_entity, build_journal_lines, BANK_ACCOUNTS
 from exporter import journals_to_qb_csv, journals_to_excel, summary_stats
 import pandas as pd
@@ -70,6 +70,7 @@ def _ensure_tables(conn):
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             journal_no    TEXT NOT NULL,
             journal_date  TEXT NOT NULL,
+            line_no       INTEGER DEFAULT 1,
             account_code  TEXT NOT NULL,
             account_name  TEXT NOT NULL,
             debit         REAL DEFAULT 0,
@@ -79,7 +80,9 @@ def _ensure_tables(conn):
             location      TEXT,
             tax_rate      REAL DEFAULT 0,
             tax_amount    REAL DEFAULT 0,
+            source_bank   TEXT,
             match_method  TEXT,
+            status        TEXT DEFAULT 'معتمد',
             created_at    TEXT DEFAULT (datetime('now','localtime'))
         );
 
@@ -89,6 +92,15 @@ def _ensure_tables(conn):
     cols = [r['name'] for r in conn.execute("PRAGMA table_info(accounts)")]
     if 'acc_type' not in cols:
         conn.execute("ALTER TABLE accounts ADD COLUMN acc_type TEXT DEFAULT 'أصول'")
+
+    # تأكد من وجود كل أعمدة journals الحديثة (لو القاعدة قديمة)
+    jcols = [r['name'] for r in conn.execute("PRAGMA table_info(journals)")]
+    if 'status' not in jcols:
+        conn.execute("ALTER TABLE journals ADD COLUMN status TEXT DEFAULT 'معتمد'")
+    if 'line_no' not in jcols:
+        conn.execute("ALTER TABLE journals ADD COLUMN line_no INTEGER DEFAULT 1")
+    if 'source_bank' not in jcols:
+        conn.execute("ALTER TABLE journals ADD COLUMN source_bank TEXT")
     conn.commit()
 
 
@@ -509,6 +521,7 @@ def api_export_excel():
 def api_save_journal():
     data = request.json
     lines = data.get('lines', [])
+    status = data.get('status', 'معتمد')  # معتمد أو مسودة
     conn = get_conn()
     # حساب line_no تتابعي ضمن كل journal_no
     line_counters = {}
@@ -519,8 +532,8 @@ def api_save_journal():
         conn.execute("""
             INSERT INTO journals
               (journal_no,journal_date,line_no,account_code,account_name,debit,credit,
-               entity_name,memo,location,tax_rate,tax_amount,match_method)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+               entity_name,memo,location,tax_rate,tax_amount,match_method,status)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """, (
             jno, ln.get('journal_date',''), line_no,
             ln.get('account_code',''), ln.get('account_name',''),
@@ -528,7 +541,7 @@ def api_save_journal():
             ln.get('entity_name',''), ln.get('memo',''),
             ln.get('location',''),
             ln.get('tax_rate',0) or 0, ln.get('tax_amount',0) or 0,
-            ln.get('match_method',''),
+            ln.get('match_method',''), status,
         ))
     conn.commit()
     conn.close()
@@ -540,12 +553,27 @@ def api_save_journal():
 # ══════════════════════════════════════════════════════════════
 @app.route('/api/journals')
 def api_journals():
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
+
+    query = """
+        SELECT id, journal_no, journal_date, line_no, account_code, account_name,
+               debit, credit, entity_name, memo, location, tax_amount,
+               source_bank, status, created_at
+        FROM journals
+        WHERE 1=1
+    """
+    params = []
+    if date_from:
+        query += " AND journal_date >= ?"
+        params.append(date_from)
+    if date_to:
+        query += " AND journal_date <= ?"
+        params.append(date_to)
+    query += " ORDER BY journal_date DESC, journal_no DESC, line_no ASC"
+
     conn = get_conn()
-    df = pd.read_sql_query("""
-        SELECT journal_no, journal_date, account_code, account_name,
-               debit, credit, entity_name, memo, location, tax_amount, created_at
-        FROM journals ORDER BY journal_date DESC, journal_no DESC
-    """, conn)
+    df = pd.read_sql_query(query, conn, params=params)
     conn.close()
     return jsonify(df.to_dict('records'))
 
@@ -554,6 +582,66 @@ def api_journals():
 def api_journals_delete(journal_no):
     conn = get_conn()
     conn.execute("DELETE FROM journals WHERE journal_no=?", (journal_no,))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
+@app.route('/api/journals/bulk-delete', methods=['POST'])
+def api_journals_bulk_delete():
+    """حذف جماعي لعدة قيود دفعة واحدة عبر أرقام القيود (journal_no)"""
+    data = request.json
+    journal_nos = data.get('journal_nos', [])
+    if not journal_nos:
+        return jsonify({'error': 'لم يتم تحديد أي قيود'}), 400
+    conn = get_conn()
+    placeholders = ','.join('?' * len(journal_nos))
+    conn.execute(f"DELETE FROM journals WHERE journal_no IN ({placeholders})", journal_nos)
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True, 'deleted': len(journal_nos)})
+
+
+@app.route('/api/journals/<journal_no>/status', methods=['PATCH'])
+def api_journals_update_status(journal_no):
+    """تحديث حالة قيد كامل (كل سطوره): معتمد / مسودة"""
+    data = request.json
+    status = data.get('status', 'معتمد')
+    conn = get_conn()
+    conn.execute("UPDATE journals SET status=? WHERE journal_no=?", (status, journal_no))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
+@app.route('/api/journals/line/<int:line_id>', methods=['PATCH'])
+def api_journals_update_line(line_id):
+    """
+    تعديل سطر قيد واحد بعد الحفظ (الحساب، المبلغ، الطرف، الوصف...).
+    يُستخدم من شاشة "مراجعة القيود" عند تعديل أي قيمة في قيد محفوظ.
+    """
+    data = request.json
+    allowed = ['journal_date', 'account_code', 'account_name', 'debit',
+               'credit', 'entity_name', 'memo', 'location']
+    fields = {k: v for k, v in data.items() if k in allowed}
+    if not fields:
+        return jsonify({'error': 'لا توجد بيانات للتحديث'}), 400
+
+    set_clause = ', '.join(f"{k}=?" for k in fields)
+    values = list(fields.values()) + [line_id]
+
+    conn = get_conn()
+    conn.execute(f"UPDATE journals SET {set_clause} WHERE id=?", values)
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
+@app.route('/api/journals/line/<int:line_id>', methods=['DELETE'])
+def api_journals_delete_line(line_id):
+    """حذف سطر واحد فقط من قيد (نادر الاستخدام، عادة يُحذف القيد كاملاً)"""
+    conn = get_conn()
+    conn.execute("DELETE FROM journals WHERE id=?", (line_id,))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
