@@ -94,15 +94,30 @@ def match_entity(bank_desc: str, master: list) -> dict:
     for item in master:
         key = item['bank_key']
         key_c = clean_for_match(key)
-        # اسم البنك داخل الوصف أو الوصف داخل اسم البنك (min 3 chars)
-        if len(key) >= 3 and (key in clean_match or clean_match in key or
-                               key_c in clean_match or clean_match in key_c):
-            score = len(key) / max(len(clean_match), 1) * 100
+
+        # تطابق substring كامل وحرفي = ثقة عالية ثابتة.
+        # (لا نحسبها كنسبة من طول الجملة الكاملة كما كان سابقاً، لأن
+        # وصف البنك طويل جداً ويحتوي IBAN/مرجع/تاريخ، وهذا كان يُصغّر
+        # النسبة ظلماً ويرفض حتى التطابقات الصحيحة 100%)
+        if len(key) >= 3 and key in clean_match:
+            score = 90 + min(len(key), 10)
+            if score > best_score:
+                best_score = score
+                best = item
+        elif len(key_c) >= 3 and key_c in clean_match:
+            score = 85 + min(len(key_c), 10)
+            if score > best_score:
+                best_score = score
+                best = item
+        elif len(key) >= 3 and clean_match in key:
+            # الحالة العكسية: نص البنك (بعد التنظيف) أقصر ومحتوى بالكامل
+            # داخل اسم المورد (نادرة، لكن نُبقيها كحماية)
+            score = 70
             if score > best_score:
                 best_score = score
                 best = item
         else:
-            # مطابقة كلمة-بكلمة
+            # مطابقة كلمة-بكلمة (بدون تغيير)
             words_key  = [w for w in key_c.split()        if len(w) >= 3]
             words_desc = [w for w in clean_match.split()   if len(w) >= 3]
             if words_key:
@@ -114,7 +129,7 @@ def match_entity(bank_desc: str, master: list) -> dict:
                         best = item
 
     if best and best_score >= 45:
-        confidence = min(int(best_score), 95)
+        confidence = min(int(best_score), 99)
         return {**best, 'method': 'fuzzy', 'confidence': confidence}
 
     # --- Phase 3: Keyword rules ---
