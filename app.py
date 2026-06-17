@@ -704,3 +704,204 @@ def api_location_options():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+
+# ══════════════════════════════════════════════════════════════
+# API — Import / Export for master data tables
+# ══════════════════════════════════════════════════════════════
+import csv
+from io import StringIO
+
+@app.route('/api/accounts/export')
+def api_accounts_export():
+    conn = get_conn()
+    rows = rows_to_list(conn.execute("SELECT acc_code,acc_name,acc_type FROM accounts ORDER BY acc_code").fetchall())
+    conn.close()
+    buf = StringIO()
+    w = csv.DictWriter(buf, fieldnames=['acc_code','acc_name','acc_type'])
+    w.writeheader(); w.writerows(rows)
+    return send_file(BytesIO(buf.getvalue().encode('utf-8-sig')), mimetype='text/csv',
+                     as_attachment=True, download_name='accounts.csv')
+
+@app.route('/api/accounts/import', methods=['POST'])
+def api_accounts_import():
+    f = request.files.get('file')
+    if not f: return jsonify({'error':'لم يتم رفع ملف'}),400
+    text = f.read().decode('utf-8-sig')
+    reader = csv.DictReader(StringIO(text))
+    conn = get_conn(); added=0; skipped=0
+    for row in reader:
+        code=str(row.get('acc_code','')).strip()
+        name=str(row.get('acc_name','')).strip()
+        atype=str(row.get('acc_type','أصول')).strip()
+        if not code or not name: continue
+        try:
+            conn.execute("INSERT INTO accounts (acc_code,acc_name,acc_type) VALUES (?,?,?)",(code,name,atype))
+            added+=1
+        except: skipped+=1
+    conn.commit(); conn.close()
+    return jsonify({'success':True,'added':added,'skipped':skipped})
+
+@app.route('/api/suppliers/export')
+def api_suppliers_export():
+    conn = get_conn()
+    rows = rows_to_list(conn.execute("SELECT bank_name,sys_name,acc_link,sup_type FROM suppliers ORDER BY sys_name").fetchall())
+    conn.close()
+    buf = StringIO()
+    w = csv.DictWriter(buf, fieldnames=['bank_name','sys_name','acc_link','sup_type'])
+    w.writeheader(); w.writerows(rows)
+    return send_file(BytesIO(buf.getvalue().encode('utf-8-sig')), mimetype='text/csv',
+                     as_attachment=True, download_name='suppliers.csv')
+
+@app.route('/api/suppliers/import', methods=['POST'])
+def api_suppliers_import():
+    f = request.files.get('file')
+    if not f: return jsonify({'error':'لم يتم رفع ملف'}),400
+    text = f.read().decode('utf-8-sig')
+    reader = csv.DictReader(StringIO(text))
+    conn = get_conn(); added=0
+    for row in reader:
+        bank=str(row.get('bank_name','')).strip()
+        sys_=str(row.get('sys_name','')).strip()
+        acc=str(row.get('acc_link','')).strip()
+        sup_type=str(row.get('sup_type','Trade')).strip()
+        if not bank or not sys_: continue
+        conn.execute("INSERT INTO suppliers (bank_name,sys_name,acc_link,sup_type) VALUES (?,?,?,?)",(bank,sys_,acc,sup_type))
+        added+=1
+    conn.commit(); conn.close()
+    return jsonify({'success':True,'added':added})
+
+@app.route('/api/suppliers/<int:item_id>', methods=['PUT'])
+def api_suppliers_update(item_id):
+    data=request.json
+    conn=get_conn()
+    conn.execute("UPDATE suppliers SET bank_name=?,sys_name=?,acc_link=?,sup_type=? WHERE id=?",
+                 (data.get('bank_name',''),data.get('sys_name',''),data.get('acc_link',''),data.get('sup_type','Trade'),item_id))
+    conn.commit(); conn.close()
+    return jsonify({'success':True})
+
+@app.route('/api/customers/export')
+def api_customers_export():
+    conn = get_conn()
+    rows = rows_to_list(conn.execute("SELECT bank_name,sys_name,acc_link,cust_type FROM customers ORDER BY sys_name").fetchall())
+    conn.close()
+    buf = StringIO()
+    w = csv.DictWriter(buf, fieldnames=['bank_name','sys_name','acc_link','cust_type'])
+    w.writeheader(); w.writerows(rows)
+    return send_file(BytesIO(buf.getvalue().encode('utf-8-sig')), mimetype='text/csv',
+                     as_attachment=True, download_name='customers.csv')
+
+@app.route('/api/customers/import', methods=['POST'])
+def api_customers_import():
+    f = request.files.get('file')
+    if not f: return jsonify({'error':'لم يتم رفع ملف'}),400
+    text = f.read().decode('utf-8-sig')
+    reader = csv.DictReader(StringIO(text))
+    conn = get_conn(); added=0
+    for row in reader:
+        bank=str(row.get('bank_name','')).strip()
+        sys_=str(row.get('sys_name','')).strip()
+        acc=str(row.get('acc_link','')).strip()
+        cust_type=str(row.get('cust_type','Trade')).strip()
+        if not bank or not sys_: continue
+        conn.execute("INSERT INTO customers (bank_name,sys_name,acc_link,cust_type) VALUES (?,?,?,?)",(bank,sys_,acc,cust_type))
+        added+=1
+    conn.commit(); conn.close()
+    return jsonify({'success':True,'added':added})
+
+@app.route('/api/customers/<int:item_id>', methods=['PUT'])
+def api_customers_update(item_id):
+    data=request.json
+    conn=get_conn()
+    conn.execute("UPDATE customers SET bank_name=?,sys_name=?,acc_link=?,cust_type=? WHERE id=?",
+                 (data.get('bank_name',''),data.get('sys_name',''),data.get('acc_link',''),data.get('cust_type','Trade'),item_id))
+    conn.commit(); conn.close()
+    return jsonify({'success':True})
+
+@app.route('/api/expenses/export')
+def api_expenses_export():
+    conn = get_conn()
+    rows = rows_to_list(conn.execute("SELECT bank_description,expense_category,acc_link FROM expenses_map").fetchall())
+    conn.close()
+    buf = StringIO()
+    w = csv.DictWriter(buf, fieldnames=['bank_description','expense_category','acc_link'])
+    w.writeheader(); w.writerows(rows)
+    return send_file(BytesIO(buf.getvalue().encode('utf-8-sig')), mimetype='text/csv',
+                     as_attachment=True, download_name='expenses.csv')
+
+@app.route('/api/expenses/import', methods=['POST'])
+def api_expenses_import():
+    f = request.files.get('file')
+    if not f: return jsonify({'error':'لم يتم رفع ملف'}),400
+    text = f.read().decode('utf-8-sig')
+    reader = csv.DictReader(StringIO(text))
+    conn = get_conn(); added=0
+    for row in reader:
+        bank=str(row.get('bank_description','')).strip()
+        cat=str(row.get('expense_category','')).strip()
+        acc=str(row.get('acc_link','')).strip()
+        if not bank: continue
+        conn.execute("INSERT INTO expenses_map (bank_description,expense_category,acc_link) VALUES (?,?,?)",(bank,cat or bank,acc))
+        added+=1
+    conn.commit(); conn.close()
+    return jsonify({'success':True,'added':added})
+
+@app.route('/api/expenses/<int:item_id>', methods=['PUT'])
+def api_expenses_update(item_id):
+    data=request.json
+    conn=get_conn()
+    conn.execute("UPDATE expenses_map SET bank_description=?,expense_category=?,acc_link=? WHERE id=?",
+                 (data.get('bank_description',''),data.get('expense_category',''),data.get('acc_link',''),item_id))
+    conn.commit(); conn.close()
+    return jsonify({'success':True})
+
+@app.route('/api/locations/export')
+def api_locations_export():
+    conn = get_conn()
+    rows = rows_to_list(conn.execute("SELECT name,is_main,city FROM locations ORDER BY is_main DESC,name").fetchall())
+    conn.close()
+    buf = StringIO()
+    w = csv.DictWriter(buf, fieldnames=['name','is_main','city'])
+    w.writeheader(); w.writerows(rows)
+    return send_file(BytesIO(buf.getvalue().encode('utf-8-sig')), mimetype='text/csv',
+                     as_attachment=True, download_name='locations.csv')
+
+@app.route('/api/locations/import', methods=['POST'])
+def api_locations_import():
+    f = request.files.get('file')
+    if not f: return jsonify({'error':'لم يتم رفع ملف'}),400
+    text = f.read().decode('utf-8-sig')
+    reader = csv.DictReader(StringIO(text))
+    conn = get_conn(); added=0
+    for row in reader:
+        name=str(row.get('name','')).strip()
+        is_main=str(row.get('is_main','موقع فرعي')).strip()
+        city=str(row.get('city','الرياض')).strip()
+        if not name: continue
+        conn.execute("INSERT INTO locations (name,is_main,city) VALUES (?,?,?)",(name,is_main,city))
+        added+=1
+    conn.commit(); conn.close()
+    return jsonify({'success':True,'added':added})
+
+@app.route('/api/locations/<int:item_id>', methods=['PUT'])
+def api_locations_update(item_id):
+    data=request.json
+    conn=get_conn()
+    conn.execute("UPDATE locations SET name=?,is_main=?,city=? WHERE id=?",
+                 (data.get('name',''),data.get('is_main','موقع فرعي'),data.get('city','الرياض'),item_id))
+    conn.commit(); conn.close()
+    return jsonify({'success':True})
+
+@app.route('/api/dashboard/cashflow')
+def api_cashflow():
+    """بيانات Cash Flow شهرية للـ Dashboard"""
+    conn = get_conn()
+    df = pd.read_sql_query("""
+        SELECT strftime('%Y-%m', journal_date) as month,
+               SUM(CASE WHEN credit > 0 THEN credit ELSE 0 END) as inflow,
+               SUM(CASE WHEN debit > 0 THEN debit ELSE 0 END) as outflow
+        FROM journals
+        WHERE journal_date >= date('now', '-6 months')
+        GROUP BY month ORDER BY month
+    """, conn)
+    conn.close()
+    return jsonify(df.to_dict('records'))
