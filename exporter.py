@@ -28,16 +28,21 @@ def journals_to_qb_csv(journals_df: pd.DataFrame) -> bytes:
     """
     يحوّل DataFrame القيود إلى bytes CSV جاهز للرفع على QuickBooks.
     journals_df أعمدة مطلوبة:
-        journal_no, journal_date, account_name, debit, credit,
+        journal_no, journal_date, account_code, debit, credit,
         memo, entity_name, location, tax_amount
+
+    ملاحظة: عمود AccountName في مخرج QuickBooks يحمل كود الحساب
+    (account_code) فقط، وليس اسم الحساب، حسب الاتفاق مع المحاسب —
+    لأن كود الحساب هو المعرّف الفعلي المطابق لشجرة الحسابات في QuickBooks.
     """
     out_rows = []
     for _, r in journals_df.iterrows():
-        tax_name = 'VAT 15%' if float(r.get('tax_amount', 0) or 0) > 0 else ''
+        tax_amt = float(r.get('tax_amount', 0) or 0)
+        tax_name = 'Bank Fee VAT' if tax_amt > 0 else ''
         out_rows.append({
             'JournalNo':   r.get('journal_no', ''),
             'JournalDate': r.get('journal_date', ''),
-            'AccountName': r.get('account_name', ''),
+            'AccountName': r.get('account_code', ''),
             'Debits':      r.get('debit', 0) or '',
             'Credits':     r.get('credit', 0) or '',
             'Description': r.get('memo', ''),
@@ -51,6 +56,17 @@ def journals_to_qb_csv(journals_df: pd.DataFrame) -> bytes:
     buf = StringIO()
     df_out.to_csv(buf, index=False, encoding='utf-8-sig')
     return buf.getvalue().encode('utf-8-sig')
+
+
+def single_journal_to_qb_csv(journal_lines: list) -> bytes:
+    """
+    يصدّر سطور قيد واحد فقط (مدين+دائن لعملية واحدة) بصيغة QuickBooks.
+    يُستخدم من زر "تصدير" الفردي بجانب كل عملية معتمدة في سجل القيود.
+    journal_lines: لائحة dict بنفس مفاتيح سطر القيد (journal_no, journal_date,
+        account_code, debit, credit, memo, entity_name, location, tax_amount)
+    """
+    df = pd.DataFrame(journal_lines)
+    return journals_to_qb_csv(df)
 
 
 def journals_to_excel(journals_df: pd.DataFrame) -> bytes:
