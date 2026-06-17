@@ -1,103 +1,60 @@
 """
-QuickBooks Journal Entry CSV Exporter
---------------------------------------
-الصيغة المطلوبة لـ QuickBooks Online - Journal Entries Import:
-  JournalNo, JournalDate, AccountName, Debits, Credits,
-  Description, Name, Location, TaxAmount, TaxName
+QuickBooks Journal Entry CSV Exporter — TALA v2
+صيغة QB: JournalNo, JournalDate, AccountName (= acc_code), Debits, Credits,
+          Description, Name, Location, TaxAmount, TaxName
 """
 
 import pandas as pd
 from io import StringIO, BytesIO
 
-
-QB_COLUMNS = [
-    'JournalNo',
-    'JournalDate',
-    'AccountName',
-    'Debits',
-    'Credits',
-    'Description',
-    'Name',
-    'Location',
-    'TaxAmount',
-    'TaxName',
-]
+QB_COLUMNS = ['JournalNo','JournalDate','AccountName','Debits','Credits',
+               'Description','Name','Location','TaxAmount','TaxName']
 
 
 def journals_to_qb_csv(journals_df: pd.DataFrame) -> bytes:
-    """
-    يحوّل DataFrame القيود إلى bytes CSV جاهز للرفع على QuickBooks.
-    journals_df أعمدة مطلوبة:
-        journal_no, journal_date, account_code, debit, credit,
-        memo, entity_name, location, tax_amount
-
-    ملاحظة: عمود AccountName في مخرج QuickBooks يحمل كود الحساب
-    (account_code) فقط، وليس اسم الحساب، حسب الاتفاق مع المحاسب —
-    لأن كود الحساب هو المعرّف الفعلي المطابق لشجرة الحسابات في QuickBooks.
-    """
     out_rows = []
     for _, r in journals_df.iterrows():
         tax_amt = float(r.get('tax_amount', 0) or 0)
-        tax_name = 'Bank Fee VAT' if tax_amt > 0 else ''
         out_rows.append({
             'JournalNo':   r.get('journal_no', ''),
             'JournalDate': r.get('journal_date', ''),
-            'AccountName': r.get('account_code', ''),
+            'AccountName': r.get('account_code', ''),   # كود الحساب فقط
             'Debits':      r.get('debit', 0) or '',
             'Credits':     r.get('credit', 0) or '',
             'Description': r.get('memo', ''),
             'Name':        r.get('entity_name', ''),
             'Location':    r.get('location', ''),
-            'TaxAmount':   r.get('tax_amount', '') or '',
-            'TaxName':     tax_name,
+            'TaxAmount':   tax_amt or '',
+            'TaxName':     'Bank Fee VAT' if tax_amt > 0 else '',
         })
-
     df_out = pd.DataFrame(out_rows, columns=QB_COLUMNS)
     buf = StringIO()
     df_out.to_csv(buf, index=False, encoding='utf-8-sig')
     return buf.getvalue().encode('utf-8-sig')
 
 
-def single_journal_to_qb_csv(journal_lines: list) -> bytes:
-    """
-    يصدّر سطور قيد واحد فقط (مدين+دائن لعملية واحدة) بصيغة QuickBooks.
-    يُستخدم من زر "تصدير" الفردي بجانب كل عملية معتمدة في سجل القيود.
-    journal_lines: لائحة dict بنفس مفاتيح سطر القيد (journal_no, journal_date,
-        account_code, debit, credit, memo, entity_name, location, tax_amount)
-    """
-    df = pd.DataFrame(journal_lines)
-    return journals_to_qb_csv(df)
-
-
 def journals_to_excel(journals_df: pd.DataFrame) -> bytes:
-    """نفس البيانات لكن بـ Excel مع تنسيق للمراجعة"""
     buf = BytesIO()
     with pd.ExcelWriter(buf, engine='xlsxwriter') as writer:
         journals_df.to_excel(writer, index=False, sheet_name='Journal Entries')
         wb = writer.book
         ws = writer.sheets['Journal Entries']
-
-        hdr = wb.add_format({'bold': True, 'bg_color': '#1e3a5f',
-                             'font_color': 'white', 'border': 1})
-        green = wb.add_format({'bg_color': '#e8f5e9', 'border': 1})
-        red   = wb.add_format({'bg_color': '#ffebee', 'border': 1})
-        num   = wb.add_format({'num_format': '#,##0.00', 'border': 1})
-
+        hdr = wb.add_format({'bold':True,'bg_color':'#1e3a5f','font_color':'white','border':1})
+        green = wb.add_format({'bg_color':'#e8f5e9','border':1})
+        red   = wb.add_format({'bg_color':'#ffebee','border':1})
+        num   = wb.add_format({'num_format':'#,##0.00','border':1})
         for col_num, col_name in enumerate(journals_df.columns):
             ws.write(0, col_num, col_name, hdr)
-
         for row_num, (_, row) in enumerate(journals_df.iterrows(), start=1):
             fmt = green if float(row.get('credit', 0) or 0) > 0 else red
+            debit_col = list(journals_df.columns).index('debit') if 'debit' in journals_df.columns else -1
+            credit_col = list(journals_df.columns).index('credit') if 'credit' in journals_df.columns else -1
             for col_num, val in enumerate(row):
-                if col_num in (
-                    list(journals_df.columns).index('debit'),
-                    list(journals_df.columns).index('credit'),
-                ):
+                if col_num in (debit_col, credit_col):
                     ws.write(row_num, col_num, val or '', num)
                 else:
                     ws.write(row_num, col_num, str(val) if val else '', fmt)
-
-        ws.set_column(0, len(journals_df.columns), 20)
+        ws.set_column(0, len(journals_df.columns), 22)
     return buf.getvalue()
 
 
