@@ -189,14 +189,14 @@ def match_entity(bank_desc: str, master: list) -> dict:
 def build_memo(entity_type: str, sys_name: str, bank_desc: str) -> str:
     """
     يبني البيان (الشرح) الثابت للقيد حسب نوع الطرف:
-      - مورد  → "دفع الى [اسم المورد كما في النظام]"
-      - عميل  → "تحصيل من [اسم العميل كما في النظام]"
+      - مورد  → "Payment To [اسم المورد كما في النظام]"
+      - عميل  → "Collection From [اسم العميل كما في النظام]"
       - غير ذلك (رسوم/رواتب/حكومي/غير محدد) → النص الكامل لوصف البنك
     """
     if entity_type == 'supplier' and sys_name:
-        return f"دفع الى {sys_name}"
+        return f"Payment To {sys_name}"
     if entity_type == 'customer' and sys_name:
-        return f"تحصيل من {sys_name}"
+        return f"Collection From {sys_name}"
     return bank_desc
 
 
