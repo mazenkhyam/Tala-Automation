@@ -3,1392 +3,1959 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TALA — نظام القيود المحاسبية الذكي</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/dist/tabler-icons.min.css">
+<title>TALA — نظام القيود المحاسبية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/dist/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
---bg:#0d1117;--card:#161b22;--border:#30363d;--gold:#d4af37;
---text:#e6edf3;--muted:#8b949e;--success:#2ea043;--danger:#da3633;
---warn:#d29922;--info:#388bfd;--sidebar:200px
+  --bg:#080c14;--surface:#0d1520;--card:#111927;--card2:#161f2e;
+  --border:#1e2d42;--border2:#243347;
+  --gold:#c8a84b;--gold2:#e8c96d;--gold-dim:#c8a84b22;
+  --text:#dce8f5;--text2:#8fa3bc;--text3:#4a6080;
+  --green:#22c55e;--green-dim:#22c55e18;
+  --red:#ef4444;--red-dim:#ef444418;
+  --blue:#3b82f6;--blue-dim:#3b82f618;
+  --amber:#f59e0b;--amber-dim:#f59e0b18;
+  --purple:#a855f7;--purple-dim:#a855f718;
+  --sidebar:220px;
+  --radius:10px;--radius-sm:7px;
 }
-html,body{height:100%}
-body{font-family:'Segoe UI','Tahoma',sans-serif;background:var(--bg);color:var(--text);direction:rtl}
-.app{display:flex;min-height:100vh}
-.sidebar{width:var(--sidebar);flex-shrink:0;background:#010409;border-left:0.5px solid var(--border);display:flex;flex-direction:column}
-.sb-logo{padding:16px 14px 14px;border-bottom:0.5px solid var(--border)}
-.sb-logo-name{font-size:16px;font-weight:600;color:var(--gold)}
-.sb-logo-sub{font-size:10px;color:var(--muted);margin-top:2px}
-.sb-group{padding:12px 12px 4px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-.sb-item{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:13px;cursor:pointer;color:var(--muted);border-right:2px solid transparent;transition:all .15s}
-.sb-item:hover{background:#0d1117;color:var(--text)}
-.sb-item.active{color:var(--gold);border-right-color:var(--gold);background:#161b22}
-.sb-item i{font-size:16px;flex-shrink:0;width:18px;text-align:center}
-.sb-footer{margin-top:auto;padding:14px;border-top:0.5px solid var(--border)}
-.main{flex:1;display:flex;flex-direction:column;min-width:0}
-.topbar{background:#010409;border-bottom:0.5px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.tb-title{font-size:15px;font-weight:600;color:var(--text)}
-.tb-right{display:flex;align-items:center;gap:8px}
-.content{padding:20px 24px;flex:1;overflow-y:auto}
+html,body{height:100%;overflow:hidden}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--text);direction:rtl;font-size:14px}
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* ═══ SIDEBAR ═══ */
+.sidebar{
+  width:var(--sidebar);flex-shrink:0;background:var(--surface);
+  border-left:1px solid var(--border);display:flex;flex-direction:column;
+  overflow-y:auto;overflow-x:hidden
+}
+.sb-logo{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
+.sb-logo-name{
+  font-size:22px;font-weight:700;color:var(--gold);letter-spacing:2px;
+  font-family:'JetBrains Mono',monospace
+}
+.sb-logo-name span{color:var(--gold2)}
+.sb-logo-sub{font-size:10px;color:var(--text3);margin-top:3px;letter-spacing:.05em}
+.sb-section{padding:16px 10px 4px;font-size:9px;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.12em;font-weight:600}
+.sb-item{
+  display:flex;align-items:center;gap:10px;padding:9px 14px 9px 10px;
+  font-size:12.5px;cursor:pointer;color:var(--text2);
+  border-right:2px solid transparent;margin:1px 8px;border-radius:var(--radius-sm);
+  transition:all .15s;white-space:nowrap
+}
+.sb-item:hover{background:var(--card);color:var(--text)}
+.sb-item.active{color:var(--gold);background:var(--gold-dim);border-right-color:var(--gold)}
+.sb-item i{font-size:15px;flex-shrink:0;width:16px;text-align:center}
+.sb-item .badge-count{
+  margin-right:auto;background:var(--gold-dim);color:var(--gold);
+  font-size:9px;padding:1px 6px;border-radius:10px;font-weight:600
+}
+.sb-footer{margin-top:auto;padding:14px 16px;border-top:1px solid var(--border)}
+.sb-user{display:flex;align-items:center;gap:10px}
+.sb-avatar{
+  width:30px;height:30px;border-radius:50%;background:var(--gold-dim);
+  border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:var(--gold);font-weight:700;flex-shrink:0
+}
+.sb-user-info{min-width:0}
+.sb-user-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-user-role{font-size:10px;color:var(--text3)}
+
+/* ═══ MAIN ═══ */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 24px;height:56px;display:flex;align-items:center;
+  justify-content:space-between;flex-shrink:0
+}
+.tb-title{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.tb-title i{color:var(--gold);font-size:16px}
+.tb-right{display:flex;align-items:center;gap:10px}
+.tb-status{
+  display:flex;align-items:center;gap:6px;font-size:11px;color:var(--green);
+  background:var(--green-dim);border:1px solid #22c55e30;
+  padding:4px 10px;border-radius:20px
+}
+.tb-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);
+  animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.content{flex:1;overflow-y:auto;padding:22px 26px}
 .sc{display:none}.sc.on{display:block}
 
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
-.stat{background:var(--card);border:0.5px solid var(--border);border-radius:10px;padding:14px;border-bottom:3px solid var(--border)}
-.stat.gold{border-bottom-color:var(--gold)}
-.stat.green{border-bottom-color:var(--success)}
-.stat.red{border-bottom-color:var(--danger)}
-.stat.blue{border-bottom-color:var(--info)}
-.stat-lbl{font-size:12px;color:var(--muted);margin-bottom:6px}
-.stat-val{font-size:24px;font-weight:700;color:var(--text)}
-.stat-sub{font-size:10px;color:var(--muted);margin-top:3px}
+/* ═══ STATS GRID ═══ */
+.kpi-grid{display:grid;gap:14px;margin-bottom:20px}
+.kpi-grid.cols4{grid-template-columns:repeat(4,1fr)}
+.kpi-grid.cols3{grid-template-columns:repeat(3,1fr)}
+.kpi-grid.cols2{grid-template-columns:repeat(2,1fr)}
 
-.card{background:var(--card);border:0.5px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:16px}
-.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
-.card-title{font-size:13px;font-weight:600;color:var(--gold)}
+.kpi{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 18px;position:relative;overflow:hidden;transition:border-color .2s
+}
+.kpi:hover{border-color:var(--border2)}
+.kpi::before{content:'';position:absolute;top:0;right:0;width:3px;height:100%;border-radius:0 var(--radius) var(--radius) 0}
+.kpi.gold::before{background:var(--gold)}
+.kpi.green::before{background:var(--green)}
+.kpi.red::before{background:var(--red)}
+.kpi.blue::before{background:var(--blue)}
+.kpi.amber::before{background:var(--amber)}
+.kpi.purple::before{background:var(--purple)}
+.kpi-icon{
+  width:36px;height:36px;border-radius:8px;display:flex;align-items:center;
+  justify-content:center;font-size:18px;margin-bottom:10px;flex-shrink:0
+}
+.kpi.gold .kpi-icon{background:var(--gold-dim);color:var(--gold)}
+.kpi.green .kpi-icon{background:var(--green-dim);color:var(--green)}
+.kpi.red .kpi-icon{background:var(--red-dim);color:var(--red)}
+.kpi.blue .kpi-icon{background:var(--blue-dim);color:var(--blue)}
+.kpi.amber .kpi-icon{background:var(--amber-dim);color:var(--amber)}
+.kpi.purple .kpi-icon{background:var(--purple-dim);color:var(--purple)}
+.kpi-lbl{font-size:11px;color:var(--text3);margin-bottom:5px;font-weight:500}
+.kpi-val{font-size:26px;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace;line-height:1}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:5px}
 
-.btn{font-size:12px;padding:6px 14px;border-radius:8px;border:0.5px solid var(--border);background:transparent;cursor:pointer;color:var(--text);transition:all .12s;font-family:inherit}
-.btn:hover{background:#21262d}
-.btn.pri{background:var(--info);color:#fff;border-color:var(--info)}
-.btn.pri:hover{background:#1a7be0}
-.btn.grn{background:var(--success);color:#fff;border-color:var(--success)}
-.btn.gold-btn{background:var(--gold);color:#000;border-color:var(--gold);font-weight:600}
-.btn.sm{font-size:11px;padding:4px 10px}
-.btn.danger{background:var(--danger);color:#fff;border-color:var(--danger)}
-.btn:disabled{opacity:.5;cursor:default}
+/* ═══ CARD ═══ */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px 20px;margin-bottom:16px
+}
+.card-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;flex-wrap:wrap;gap:10px
+}
+.card-title{
+  font-size:13px;font-weight:600;color:var(--gold);
+  display:flex;align-items:center;gap:8px
+}
+.card-title i{font-size:15px}
+.card-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
-.badge{display:inline-flex;align-items:center;font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600}
-.bg-g{background:#1a3a1a;color:#56d364}
-.bg-r{background:#3a1a1a;color:#f85149}
-.bg-b{background:#1a2a3a;color:#58a6ff}
-.bg-a{background:#3a2a0a;color:#e3b341}
-.bg-m{background:#21262d;color:var(--muted)}
+/* ═══ BUTTONS ═══ */
+.btn{
+  font-size:12px;padding:7px 14px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);background:transparent;cursor:pointer;
+  color:var(--text2);transition:all .15s;font-family:inherit;
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap
+}
+.btn:hover{background:var(--card2);color:var(--text);border-color:var(--border2)}
+.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.primary:hover{background:#2563eb}
+.btn.gold{background:var(--gold);color:#0a0f1a;border-color:var(--gold);font-weight:600}
+.btn.gold:hover{background:var(--gold2)}
+.btn.success{background:var(--green);color:#fff;border-color:var(--green)}
+.btn.success:hover{background:#16a34a}
+.btn.danger{background:var(--red);color:#fff;border-color:var(--red)}
+.btn.danger:hover{background:#dc2626}
+.btn.ghost{background:transparent;border:1px solid var(--border)}
+.btn.sm{font-size:11px;padding:4px 10px;gap:4px}
+.btn.sm i{font-size:13px}
+.btn.lg{font-size:13px;padding:10px 20px}
+.btn.icon-only{padding:6px 8px}
+.btn:disabled{opacity:.4;cursor:default;pointer-events:none}
+.btn i{font-size:14px}
 
-table{width:100%;font-size:12px;border-collapse:collapse;table-layout:fixed}
-th{text-align:right;padding:9px 10px;font-size:11px;font-weight:600;color:var(--muted);border-bottom:0.5px solid var(--border);white-space:nowrap}
-td{padding:9px 10px;border-bottom:0.5px solid #21262d;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
-tr:hover td{background:#1c2128}
+/* ═══ TOOLBAR (CRUD actions) ═══ */
+.toolbar{
+  display:flex;align-items:center;gap:8px;padding:12px 16px;
+  border-bottom:1px solid var(--border);background:var(--card);
+  border-radius:var(--radius) var(--radius) 0 0;flex-wrap:wrap
+}
+.toolbar .sep{width:1px;height:20px;background:var(--border)}
 
-input[type=text],input[type=number],input[type=file],select,textarea{background:#21262d;color:var(--text);border:0.5px solid var(--border);border-radius:8px;padding:7px 11px;font-size:13px;width:100%;outline:none;font-family:inherit}
-input:focus,select:focus{border-color:var(--info)}
-label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px}
+/* ═══ TABLE ═══ */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;font-size:12px;border-collapse:collapse}
+th{
+  text-align:right;padding:10px 12px;font-size:11px;font-weight:600;
+  color:var(--text3);border-bottom:1px solid var(--border);
+  white-space:nowrap;background:var(--card2)
+}
+td{
+  padding:10px 12px;border-bottom:1px solid #111927;
+  color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  vertical-align:middle
+}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#0d1b2a}
+.tbl-code{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold)}
+.tbl-muted{color:var(--text3);font-size:11px}
 
-.form-row{display:grid;gap:10px;margin-bottom:12px}
-.form-row.col2{grid-template-columns:1fr 1fr}
-.form-row.col3{grid-template-columns:1fr 1fr 1fr}
-.form-row.col4{grid-template-columns:1fr 1fr 1fr 1fr}
+/* ═══ FORMS ═══ */
+.form-grid{display:grid;gap:12px;margin-bottom:14px}
+.form-grid.g2{grid-template-columns:1fr 1fr}
+.form-grid.g3{grid-template-columns:1fr 1fr 1fr}
+.form-grid.g4{grid-template-columns:1fr 1fr 1fr 1fr}
+.form-group label{
+  font-size:11px;color:var(--text3);display:block;
+  margin-bottom:5px;font-weight:500
+}
+input[type=text],input[type=number],input[type=date],select,textarea{
+  background:var(--card2);color:var(--text);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;width:100%;
+  outline:none;font-family:inherit;transition:border-color .15s
+}
+input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+input[type=file]{padding:6px 10px;font-size:12px;cursor:pointer}
+select option{background:var(--card2)}
 
-.upload-zone{border:1.5px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all .15s}
-.upload-zone:hover{border-color:var(--info);background:#1a2233}
-.upload-zone i{font-size:32px;color:var(--muted);display:block;margin-bottom:10px}
-.upload-zone:hover i{color:var(--info)}
-.upload-zone p{font-size:13px;color:var(--muted)}
+/* ═══ BADGES ═══ */
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:10px;padding:3px 8px;border-radius:20px;font-weight:600;
+  white-space:nowrap
+}
+.badge.green{background:var(--green-dim);color:var(--green)}
+.badge.red{background:var(--red-dim);color:var(--red)}
+.badge.blue{background:var(--blue-dim);color:var(--blue)}
+.badge.gold{background:var(--gold-dim);color:var(--gold)}
+.badge.amber{background:var(--amber-dim);color:var(--amber)}
+.badge.purple{background:var(--purple-dim);color:var(--purple)}
+.badge.muted{background:#1e2d4230;color:var(--text3)}
 
-.conf-bar{height:5px;border-radius:3px;background:#21262d;overflow:hidden}
-.conf-fill{height:100%;border-radius:3px;transition:width .3s}
+/* ═══ NOTIFICATION ═══ */
+.notif-wrap{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.notif{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:12px 20px;font-size:12.5px;font-weight:500;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);
+  display:flex;align-items:center;gap:10px;
+  animation:notifIn .25s ease;pointer-events:auto
+}
+.notif.success{border-color:var(--green);color:var(--green)}
+.notif.error{border-color:var(--red);color:var(--red)}
+.notif.info{border-color:var(--blue);color:var(--blue)}
+@keyframes notifIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
 
-.journal-row{background:var(--card);border:0.5px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:8px;border-right:3px solid var(--border)}
-.journal-row.high{border-right-color:var(--success)}
-.journal-row.mid{border-right-color:var(--warn)}
-.journal-row.low{border-right-color:var(--danger)}
+/* ═══ MODAL ═══ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:5000;
+  display:none;align-items:center;justify-content:center
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:24px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.8)
+}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-title{font-size:15px;font-weight:600;color:var(--gold);display:flex;align-items:center;gap:8px}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;padding:0;line-height:1}
+.modal-close:hover{color:var(--red)}
+.modal-footer{display:flex;gap:8px;justify-content:flex-start;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
 
-.tab-bar{display:flex;gap:4px;border-bottom:0.5px solid var(--border);margin-bottom:16px}
-.tab{padding:8px 16px;font-size:12px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all .15s}
+/* ═══ SEARCH ═══ */
+.search-bar{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border-bottom:1px solid var(--border)
+}
+.search-bar input{flex:1}
+.search-bar .search-icon{color:var(--text3);font-size:16px}
+
+/* ═══ EMPTY STATE ═══ */
+.empty{
+  text-align:center;padding:40px 20px;color:var(--text3)
+}
+.empty i{font-size:36px;display:block;margin-bottom:10px;opacity:.4}
+.empty p{font-size:13px}
+
+/* ═══ CASH FLOW CHART ═══ */
+.cf-chart{display:flex;align-items:flex-end;gap:8px;height:100px;padding-top:10px}
+.cf-bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.cf-bars{display:flex;gap:2px;align-items:flex-end;height:80px}
+.cf-bar{border-radius:3px 3px 0 0;min-height:4px;transition:height .4s ease;width:14px}
+.cf-bar.inflow{background:var(--green);opacity:.8}
+.cf-bar.outflow{background:var(--red);opacity:.8}
+.cf-lbl{font-size:9px;color:var(--text3);text-align:center}
+
+/* ═══ UPLOAD ZONE ═══ */
+.upload-zone{
+  border:1.5px dashed var(--border);border-radius:var(--radius);
+  padding:28px;text-align:center;cursor:pointer;transition:all .15s
+}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--blue);background:var(--blue-dim)}
+.upload-zone i{font-size:30px;color:var(--text3);display:block;margin-bottom:8px}
+.upload-zone p{font-size:12px;color:var(--text3)}
+
+/* ═══ JOURNAL ROW ═══ */
+.j-card{
+  border:1px solid var(--border);border-radius:var(--radius);
+  margin-bottom:10px;overflow:hidden
+}
+.j-card-hdr{
+  display:flex;align-items:center;gap:10px;padding:11px 16px;
+  background:var(--card2);cursor:pointer;flex-wrap:wrap
+}
+.j-card-body{padding:12px 16px;background:var(--card)}
+.j-card-body table{font-size:11px}
+
+/* ═══ REVIEW ITEM ═══ */
+.rev-item{
+  border:1px solid var(--border);border-radius:var(--radius);
+  margin-bottom:8px;overflow:hidden
+}
+.rev-item.high{border-right:3px solid var(--green)}
+.rev-item.mid{border-right:3px solid var(--amber)}
+.rev-item.low{border-right:3px solid var(--red)}
+.rev-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;flex-wrap:wrap}
+.rev-body{padding:10px 14px;background:var(--card2);font-size:11px}
+.rev-subtable td,.rev-subtable th{padding:4px 8px}
+
+/* ═══ DAY GROUP ═══ */
+.day-group{
+  border:1px solid var(--border);border-radius:var(--radius);
+  margin-bottom:10px;overflow:hidden
+}
+.day-hdr{
+  display:flex;align-items:center;gap:10px;padding:11px 16px;
+  background:var(--card2);cursor:pointer;flex-wrap:wrap
+}
+.day-body{padding:10px 14px}
+
+/* ═══ TABS ═══ */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:18px}
+.tab{
+  padding:9px 18px;font-size:12.5px;cursor:pointer;color:var(--text3);
+  border-bottom:2px solid transparent;transition:all .15s;margin-bottom:-1px
+}
 .tab:hover{color:var(--text)}
 .tab.on{color:var(--gold);border-bottom-color:var(--gold)}
 
-.search-row{display:flex;gap:8px;margin-bottom:14px;align-items:center}
-.search-row input{flex:1}
-
-.empty{text-align:center;padding:32px;color:var(--muted);font-size:13px}
-.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-.dot-g{background:var(--success)}.dot-a{background:var(--warn)}.dot-r{background:var(--danger)}
-
+/* ═══ PROGRESS ═══ */
+.progress{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:var(--blue);border-radius:3px;transition:width .35s}
 .progress-wrap{margin-top:12px;display:none}
-.progress-bar{height:4px;background:#21262d;border-radius:2px;overflow:hidden;margin-bottom:6px}
-.progress-fill{height:100%;background:var(--info);border-radius:2px;transition:width .4s}
-.progress-lbl{font-size:11px;color:var(--muted)}
+.progress-lbl{font-size:11px;color:var(--text3);margin-top:5px}
 
-.master-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:0.5px solid #21262d}
-.master-row:hover{background:#1c2128}
-.master-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
-
-.notification{position:fixed;top:16px;left:16px;z-index:1000;background:#1a3a1a;border:0.5px solid var(--success);border-radius:8px;padding:12px 18px;font-size:12px;color:#56d364;display:none;box-shadow:0 4px 20px rgba(0,0,0,.4)}
-.notification.show{display:block;animation:slideIn .3s ease}
-.err-notif{background:#2a1a1a;border-color:var(--danger);color:#f85149}
-@keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
-
-::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-track{background:var(--bg)}
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--border2)}
+
+/* ═══ MONO ═══ */
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* ═══ LAYOUT HELPERS ═══ */
+.flex{display:flex}.flex-1{flex:1}.gap6{gap:6px}.gap10{gap:10px}.gap14{gap:14px}
+.items-center{align-items:center}.justify-between{justify-content:space-between}
+.mt4{margin-top:4px}.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}
+.text-muted{color:var(--text3)}.text-gold{color:var(--gold)}.text-green{color:var(--green)}.text-red{color:var(--red)}
+.bold{font-weight:600}.fw700{font-weight:700}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.text-sm{font-size:11px}.text-xs{font-size:10px}
 </style>
 </head>
 <body>
-
 <div class="app">
 
+<!-- SIDEBAR -->
 <div class="sidebar">
   <div class="sb-logo">
-    <div class="sb-logo-name"><i class="ti ti-diamond"></i> TALA</div>
-    <div class="sb-logo-sub">نظام القيود الذكي</div>
+    <div class="sb-logo-name">T<span>ALA</span></div>
+    <div class="sb-logo-sub">نظام القيود المحاسبية الذكي</div>
   </div>
 
-  <div class="sb-group">الرئيسية</div>
-  <div class="sb-item active" onclick="nav('dashboard',this)"><i class="ti ti-layout-dashboard"></i>لوحة التحكم</div>
+  <div class="sb-section">الرئيسية</div>
+  <div class="sb-item active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i>لوحة التحكم</div>
 
-  <div class="sb-group">البيانات</div>
-  <div class="sb-item" onclick="nav('accounts',this)"><i class="ti ti-binary-tree"></i>شجرة الحسابات</div>
-  <div class="sb-item" onclick="nav('suppliers',this)"><i class="ti ti-truck"></i>الموردين</div>
-  <div class="sb-item" onclick="nav('customers',this)"><i class="ti ti-users"></i>العملاء</div>
-  <div class="sb-item" onclick="nav('expenses',this)"><i class="ti ti-receipt"></i>المصروفات</div>
-  <div class="sb-item" onclick="nav('locations',this)"><i class="ti ti-map-pin"></i>المواقع</div>
-  <div class="sb-item" onclick="nav('master',this)"><i class="ti ti-database"></i>البيانات الموحدة</div>
+  <div class="sb-section">إدارة البيانات</div>
+  <div class="sb-item" data-page="accounts"><i class="ti ti-binary-tree-2"></i>شجرة الحسابات</div>
+  <div class="sb-item" data-page="suppliers"><i class="ti ti-building-warehouse"></i>الموردين</div>
+  <div class="sb-item" data-page="customers"><i class="ti ti-users"></i>العملاء</div>
+  <div class="sb-item" data-page="expenses"><i class="ti ti-receipt-2"></i>بنود المصروفات</div>
+  <div class="sb-item" data-page="locations"><i class="ti ti-map-pin"></i>المواقع</div>
+  <div class="sb-item" data-page="master"><i class="ti ti-database-search"></i>البيانات الموحدة</div>
 
-  <div class="sb-group">العمليات</div>
-  <div class="sb-item" onclick="nav('upload',this)"><i class="ti ti-upload"></i>رفع كشف البنك</div>
-  <div class="sb-item" onclick="nav('review',this)"><i class="ti ti-table-check"></i>مراجعة القيود</div>
-  <div class="sb-item" onclick="nav('export',this)"><i class="ti ti-file-spreadsheet"></i>التصدير</div>
-  <div class="sb-item" onclick="nav('journals',this)"><i class="ti ti-history"></i>سجل القيود</div>
+  <div class="sb-section">العمليات</div>
+  <div class="sb-item" data-page="upload"><i class="ti ti-file-upload"></i>رفع كشف البنك</div>
+  <div class="sb-item" data-page="review"><i class="ti ti-table-check"></i>مراجعة القيود</div>
+  <div class="sb-item" data-page="export"><i class="ti ti-file-export"></i>التصدير</div>
+  <div class="sb-item" data-page="journals"><i class="ti ti-history"></i>سجل القيود</div>
 
   <div class="sb-footer">
-    <div style="font-size:11px;color:var(--muted);text-align:center">مازن — مدير النظام</div>
+    <div class="sb-user">
+      <div class="sb-avatar">م</div>
+      <div class="sb-user-info">
+        <div class="sb-user-name">مازن</div>
+        <div class="sb-user-role">مدير النظام</div>
+      </div>
+    </div>
   </div>
 </div>
 
+<!-- MAIN -->
 <div class="main">
-<div class="topbar">
-  <div class="tb-title" id="tb-title">لوحة التحكم</div>
-  <div class="tb-right">
-    <div class="badge bg-g"><i class="ti ti-check" style="font-size:11px;margin-left:4px"></i>النظام يعمل</div>
+  <div class="topbar">
+    <div class="tb-title" id="tb-title"><i class="ti ti-layout-dashboard"></i>لوحة التحكم</div>
+    <div class="tb-right">
+      <div class="tb-status">متصل</div>
+      <button class="btn ghost sm" onclick="refreshPage()"><i class="ti ti-refresh"></i></button>
+    </div>
   </div>
-</div>
 
-<div class="content">
+  <div class="content">
+  <div id="notif-wrap" class="notif-wrap"></div>
 
-<div id="notif" class="notification"></div>
-
-<!-- DASHBOARD -->
+<!-- ════ DASHBOARD ════ -->
 <div class="sc on" id="sc-dashboard">
-  <div class="stats">
-    <div class="stat gold"><div class="stat-lbl">شجرة الحسابات</div><div class="stat-val" id="s-accs">—</div><div class="stat-sub">حساب نشط</div></div>
-    <div class="stat red"><div class="stat-lbl">الموردين</div><div class="stat-val" id="s-supps">—</div><div class="stat-sub">مورد مسجّل</div></div>
-    <div class="stat green"><div class="stat-lbl">العملاء</div><div class="stat-val" id="s-custs">—</div><div class="stat-sub">عميل نشط</div></div>
-    <div class="stat blue"><div class="stat-lbl">بنود المصاريف</div><div class="stat-val" id="s-exps">—</div><div class="stat-sub">قاعدة مطابقة</div></div>
-  </div>
-  <div class="stats" style="grid-template-columns:repeat(3,minmax(0,1fr))">
-    <div class="stat green"><div class="stat-lbl">إجمالي الإيداعات (دائن)</div><div class="stat-val" id="dash-credit">0</div><div class="stat-sub">ر.س إجمالي</div></div>
-    <div class="stat red"><div class="stat-lbl">إجمالي المسحوبات (مدين)</div><div class="stat-val" id="dash-debit">0</div><div class="stat-sub">ر.س إجمالي</div></div>
-    <div class="stat gold"><div class="stat-lbl">صافي النقد</div><div class="stat-val" id="dash-net">0</div><div class="stat-sub">ر.س متاح</div></div>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-    <div class="card">
-      <div class="card-hdr"><div class="card-title">آخر القيود المرحّلة</div><button class="btn sm" onclick="nav('journals',document.querySelectorAll('.sb-item')[10])">عرض الكل</button></div>
-      <table>
-        <thead><tr><th>التاريخ</th><th>الحساب</th><th>الطرف</th><th>مدين</th><th>دائن</th></tr></thead>
-        <tbody id="dash-recent"><tr><td colspan="5" class="empty">جاري التحميل...</td></tr></tbody>
-      </table>
+  <div class="kpi-grid cols4">
+    <div class="kpi gold">
+      <div class="kpi-icon"><i class="ti ti-binary-tree-2"></i></div>
+      <div class="kpi-lbl">شجرة الحسابات</div>
+      <div class="kpi-val" id="s-accs">—</div>
+      <div class="kpi-sub">حساب مسجّل</div>
     </div>
-    <div class="card">
-      <div class="card-hdr"><div class="card-title">إجراءات سريعة</div></div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <button class="btn pri" onclick="nav('upload',document.querySelectorAll('.sb-item')[7])" style="width:100%;padding:12px"><i class="ti ti-upload"></i> رفع كشف بنك جديد</button>
-        <button class="btn gold-btn" onclick="nav('review',document.querySelectorAll('.sb-item')[8])" style="width:100%;padding:12px"><i class="ti ti-table-check"></i> مراجعة القيود الحالية</button>
-        <button class="btn" onclick="nav('master',document.querySelectorAll('.sb-item')[6])" style="width:100%;padding:12px"><i class="ti ti-database"></i> البيانات الموحدة</button>
-      </div>
-      <div style="margin-top:16px;padding-top:14px;border-top:0.5px solid var(--border);font-size:11px;color:var(--muted)">
-        النظام يدعم: بنك الأهلي السعودي، بنك الإنماء، بنك الرياض
-      </div>
+    <div class="kpi red">
+      <div class="kpi-icon"><i class="ti ti-building-warehouse"></i></div>
+      <div class="kpi-lbl">الموردين</div>
+      <div class="kpi-val" id="s-supps">—</div>
+      <div class="kpi-sub">مورد نشط</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-icon"><i class="ti ti-users"></i></div>
+      <div class="kpi-lbl">العملاء</div>
+      <div class="kpi-val" id="s-custs">—</div>
+      <div class="kpi-sub">عميل نشط</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-icon"><i class="ti ti-receipt-2"></i></div>
+      <div class="kpi-lbl">بنود المصروفات</div>
+      <div class="kpi-val" id="s-exps">—</div>
+      <div class="kpi-sub">قاعدة مطابقة</div>
     </div>
   </div>
-</div>
 
-<!-- ACCOUNTS -->
-<div class="sc" id="sc-accounts">
-  <div class="card">
-    <div class="card-hdr"><div class="card-title">إضافة حساب جديد</div></div>
-    <div class="form-row col3">
-      <div><label>كود الحساب</label><input type="text" id="acc-code" placeholder="مثال: 5110"></div>
-      <div><label>اسم الحساب</label><input type="text" id="acc-name" placeholder="مصاريف وقود"></div>
-      <div><label>نوع الحساب</label>
-        <select id="acc-type">
-          <option>أصول</option><option>خصوم</option><option>إيرادات</option>
-          <option>مصاريف</option><option>حقوق ملكية</option>
-        </select>
+  <!-- Cash Flow + Quick Stats -->
+  <div class="grid2" style="margin-bottom:16px">
+    <!-- Cash Flow Card -->
+    <div class="card" style="margin-bottom:0">
+      <div class="card-hdr">
+        <div class="card-title"><i class="ti ti-chart-bar"></i>التدفق النقدي — آخر 6 أشهر</div>
+        <div class="flex gap6">
+          <span class="badge green"><i class="ti ti-arrow-down"></i>إيرادات</span>
+          <span class="badge red"><i class="ti ti-arrow-up"></i>مدفوعات</span>
+        </div>
+      </div>
+      <div id="cf-chart-wrap">
+        <div class="cf-chart" id="cf-chart"><div class="text-muted text-sm" style="padding:20px">جاري تحميل البيانات...</div></div>
+      </div>
+      <div class="flex gap14 mt12" style="border-top:1px solid var(--border);padding-top:12px">
+        <div>
+          <div class="text-xs text-muted mb-1">إجمالي الإيداعات</div>
+          <div class="mono bold text-green" id="dash-credit" style="font-size:15px">—</div>
+        </div>
+        <div>
+          <div class="text-xs text-muted">إجمالي المسحوبات</div>
+          <div class="mono bold text-red" id="dash-debit" style="font-size:15px">—</div>
+        </div>
+        <div style="margin-right:auto">
+          <div class="text-xs text-muted">صافي التدفق</div>
+          <div class="mono bold text-gold" id="dash-net" style="font-size:18px">—</div>
+        </div>
       </div>
     </div>
-    <button class="btn pri" onclick="addAccount()">حفظ الحساب</button>
+
+    <!-- Quick Actions -->
+    <div class="card" style="margin-bottom:0;display:flex;flex-direction:column">
+      <div class="card-hdr">
+        <div class="card-title"><i class="ti ti-zap"></i>إجراءات سريعة</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;flex:1">
+        <button class="btn primary lg" onclick="nav('upload')" style="justify-content:center;width:100%">
+          <i class="ti ti-file-upload"></i> رفع كشف بنك جديد
+        </button>
+        <button class="btn gold lg" onclick="nav('review')" style="justify-content:center;width:100%">
+          <i class="ti ti-table-check"></i> مراجعة القيود الحالية
+        </button>
+        <button class="btn lg" onclick="nav('journals')" style="justify-content:center;width:100%">
+          <i class="ti ti-history"></i> سجل القيود المحفوظة
+        </button>
+      </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+        <div class="text-xs text-muted" style="line-height:1.7">
+          يدعم: بنك الأهلي السعودي · بنك الإنماء · بنك الرياض
+        </div>
+      </div>
+    </div>
   </div>
 
+  <!-- Recent Journals -->
   <div class="card">
     <div class="card-hdr">
-      <div class="card-title">شجرة الحسابات</div>
-      <div style="display:flex;gap:6px">
-        <input type="text" id="acc-search" placeholder="بحث..." style="width:160px" oninput="renderAccounts()">
-        <select id="acc-type-filter" onchange="renderAccounts()" style="width:120px"><option value="">كل الأنواع</option><option>أصول</option><option>خصوم</option><option>إيرادات</option><option>مصاريف</option><option>حقوق ملكية</option></select>
-      </div>
+      <div class="card-title"><i class="ti ti-clock-hour-4"></i>آخر القيود المرحّلة</div>
+      <button class="btn sm ghost" onclick="nav('journals')">عرض الكل <i class="ti ti-arrow-left"></i></button>
     </div>
-    <table>
-      <colgroup><col style="width:90px"><col><col style="width:100px"><col style="width:80px"></colgroup>
-      <thead><tr><th>الكود</th><th>اسم الحساب</th><th>النوع</th><th>إجراء</th></tr></thead>
-      <tbody id="acc-table"><tr><td colspan="4" class="empty">جاري التحميل...</td></tr></tbody>
-    </table>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>التاريخ</th><th>الحساب</th><th>الطرف</th>
+          <th style="width:110px">مدين</th><th style="width:110px">دائن</th>
+        </tr></thead>
+        <tbody id="dash-recent"><tr><td colspan="5" class="empty"><p>جاري التحميل...</p></td></tr></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-<!-- SUPPLIERS -->
+<!-- ════ ACCOUNTS ════ -->
+<div class="sc" id="sc-accounts">
+  <div class="card">
+    <div class="toolbar">
+      <button class="btn primary sm" onclick="openModal('modal-add-account')"><i class="ti ti-plus"></i>إضافة حساب</button>
+      <div class="sep"></div>
+      <button class="btn sm ghost" onclick="exportData('accounts')"><i class="ti ti-download"></i>تصدير CSV</button>
+      <label class="btn sm ghost" style="cursor:pointer">
+        <i class="ti ti-upload"></i>استيراد CSV
+        <input type="file" accept=".csv" style="display:none" onchange="importData('accounts',this)">
+      </label>
+      <div class="sep"></div>
+      <div style="flex:1"></div>
+      <select id="acc-type-filter" onchange="renderAccounts()" style="width:130px">
+        <option value="">كل الأنواع</option>
+        <option>أصول</option><option>خصوم</option><option>إيرادات</option>
+        <option>مصاريف</option><option>حقوق ملكية</option>
+      </select>
+      <input type="text" id="acc-search" placeholder="بحث..." oninput="renderAccounts()" style="width:180px">
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <colgroup><col style="width:100px"><col><col style="width:120px"><col style="width:90px"></colgroup>
+        <thead><tr><th>كود الحساب</th><th>اسم الحساب</th><th>النوع</th><th>إجراء</th></tr></thead>
+        <tbody id="acc-table"><tr><td colspan="4"><div class="empty"><i class="ti ti-loader"></i><p>جاري التحميل...</p></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════ SUPPLIERS ════ -->
 <div class="sc" id="sc-suppliers">
-  <div class="tab-bar">
-    <div class="tab on" onclick="supTab('list',this)">القائمة</div>
-    <div class="tab" onclick="supTab('add',this)">إضافة مورد</div>
-  </div>
-
-  <div id="sup-list">
-    <div class="search-row">
-      <input type="text" id="sup-search" placeholder="بحث باسم البنك أو النظام..." oninput="renderSuppliers()">
+  <div class="card">
+    <div class="toolbar">
+      <button class="btn primary sm" onclick="openModal('modal-add-supplier')"><i class="ti ti-plus"></i>إضافة مورد</button>
+      <div class="sep"></div>
+      <button class="btn sm ghost" onclick="exportData('suppliers')"><i class="ti ti-download"></i>تصدير CSV</button>
+      <label class="btn sm ghost" style="cursor:pointer">
+        <i class="ti ti-upload"></i>استيراد CSV
+        <input type="file" accept=".csv" style="display:none" onchange="importData('suppliers',this)">
+      </label>
+      <div class="sep"></div>
+      <div style="flex:1"></div>
+      <input type="text" id="sup-search" placeholder="بحث..." oninput="renderSuppliers()" style="width:200px">
     </div>
-    <div class="card" style="padding:0">
+    <div class="tbl-wrap">
       <table>
-        <colgroup><col><col><col style="width:220px"><col style="width:80px"></colgroup>
-        <thead><tr><th>اسم البنك</th><th>اسم النظام</th><th>الحساب</th><th>إجراء</th></tr></thead>
-        <tbody id="sup-table"><tr><td colspan="4" class="empty">جاري التحميل...</td></tr></tbody>
+        <colgroup><col><col><col><col style="width:80px"><col style="width:120px"></colgroup>
+        <thead><tr><th>اسم البنك</th><th>اسم النظام</th><th>الحساب</th><th>النوع</th><th>إجراءات</th></tr></thead>
+        <tbody id="sup-table"><tr><td colspan="5"><div class="empty"><i class="ti ti-loader"></i><p>جاري التحميل...</p></div></td></tr></tbody>
       </table>
-    </div>
-  </div>
-
-  <div id="sup-add" style="display:none">
-    <div class="card">
-      <div class="card-hdr"><div class="card-title">إضافة مورد جديد</div></div>
-      <div class="form-row col2">
-        <div><label>الاسم في كشف البنك</label><input type="text" id="sup-bank-name" placeholder="كما يظهر في الكشف"></div>
-        <div><label>الاسم في النظام</label><input type="text" id="sup-sys-name" placeholder="الاسم المحاسبي"></div>
-      </div>
-      <div class="form-row col2">
-        <div><label>ربط بحساب الشجرة</label><select id="sup-acc"></select></div>
-        <div><label>نوع المورد</label><select id="sup-type"><option>Trade</option><option>Non Trade</option></select></div>
-      </div>
-      <button class="btn pri" onclick="addSupplier()">حفظ المورد</button>
     </div>
   </div>
 </div>
 
-<!-- CUSTOMERS -->
+<!-- ════ CUSTOMERS ════ -->
 <div class="sc" id="sc-customers">
-  <div class="tab-bar">
-    <div class="tab on" onclick="custTab('list',this)">القائمة</div>
-    <div class="tab" onclick="custTab('add',this)">إضافة عميل</div>
-  </div>
-
-  <div id="cust-list">
-    <div class="search-row">
-      <input type="text" id="cust-search" placeholder="بحث..." oninput="renderCustomers()">
+  <div class="card">
+    <div class="toolbar">
+      <button class="btn primary sm" onclick="openModal('modal-add-customer')"><i class="ti ti-plus"></i>إضافة عميل</button>
+      <div class="sep"></div>
+      <button class="btn sm ghost" onclick="exportData('customers')"><i class="ti ti-download"></i>تصدير CSV</button>
+      <label class="btn sm ghost" style="cursor:pointer">
+        <i class="ti ti-upload"></i>استيراد CSV
+        <input type="file" accept=".csv" style="display:none" onchange="importData('customers',this)">
+      </label>
+      <div class="sep"></div>
+      <div style="flex:1"></div>
+      <input type="text" id="cust-search" placeholder="بحث..." oninput="renderCustomers()" style="width:200px">
     </div>
-    <div class="card" style="padding:0">
+    <div class="tbl-wrap">
       <table>
-        <colgroup><col><col><col style="width:220px"><col style="width:80px"></colgroup>
-        <thead><tr><th>اسم البنك</th><th>اسم النظام</th><th>الحساب</th><th>إجراء</th></tr></thead>
-        <tbody id="cust-table"><tr><td colspan="4" class="empty">جاري التحميل...</td></tr></tbody>
+        <colgroup><col><col><col><col style="width:80px"><col style="width:120px"></colgroup>
+        <thead><tr><th>اسم البنك</th><th>اسم النظام</th><th>الحساب</th><th>النوع</th><th>إجراءات</th></tr></thead>
+        <tbody id="cust-table"><tr><td colspan="5"><div class="empty"><i class="ti ti-loader"></i><p>جاري التحميل...</p></div></td></tr></tbody>
       </table>
-    </div>
-  </div>
-
-  <div id="cust-add" style="display:none">
-    <div class="card">
-      <div class="card-hdr"><div class="card-title">إضافة عميل جديد</div></div>
-      <div class="form-row col2">
-        <div><label>الاسم في كشف البنك</label><input type="text" id="cust-bank-name" placeholder="كما يظهر في الكشف"></div>
-        <div><label>الاسم في النظام</label><input type="text" id="cust-sys-name" placeholder="الاسم المحاسبي"></div>
-      </div>
-      <div class="form-row col2">
-        <div><label>ربط بحساب الشجرة</label><select id="cust-acc"></select></div>
-        <div><label>نوع العميل</label><select id="cust-type"><option>Trade</option><option>Non Trade</option></select></div>
-      </div>
-      <button class="btn pri" onclick="addCustomer()">حفظ العميل</button>
     </div>
   </div>
 </div>
 
-<!-- EXPENSES -->
+<!-- ════ EXPENSES ════ -->
 <div class="sc" id="sc-expenses">
   <div class="card">
-    <div class="card-hdr"><div class="card-title">تعريف بند مصروف جديد</div></div>
-    <div class="form-row col3">
-      <div><label>الوصف في كشف البنك</label><input type="text" id="exp-bank" placeholder="مثال: GOSI أو MOI"></div>
-      <div><label>مسمى المصروف</label><input type="text" id="exp-cat" placeholder="رسوم تأمينات"></div>
-      <div><label>الحساب</label><select id="exp-acc"></select></div>
+    <div class="toolbar">
+      <button class="btn primary sm" onclick="openModal('modal-add-expense')"><i class="ti ti-plus"></i>إضافة بند</button>
+      <div class="sep"></div>
+      <button class="btn sm ghost" onclick="exportData('expenses')"><i class="ti ti-download"></i>تصدير CSV</button>
+      <label class="btn sm ghost" style="cursor:pointer">
+        <i class="ti ti-upload"></i>استيراد CSV
+        <input type="file" accept=".csv" style="display:none" onchange="importData('expenses',this)">
+      </label>
+      <div class="sep"></div>
+      <div style="flex:1"></div>
+      <input type="text" id="exp-search" placeholder="بحث..." oninput="renderExpenses()" style="width:200px">
     </div>
-    <button class="btn pri" onclick="addExpense()">حفظ البند</button>
-  </div>
-  <div class="card" style="padding:0">
-    <div style="padding:10px 14px"><input type="text" id="exp-search" placeholder="بحث..." oninput="renderExpenses()"></div>
-    <table>
-      <colgroup><col><col><col style="width:220px"><col style="width:70px"></colgroup>
-      <thead><tr><th>الوصف بالبنك</th><th>المسمى</th><th>الحساب</th><th>حذف</th></tr></thead>
-      <tbody id="exp-table"><tr><td colspan="4" class="empty">جاري التحميل...</td></tr></tbody>
-    </table>
+    <div class="tbl-wrap">
+      <table>
+        <colgroup><col><col><col style="width:60px"><col style="width:120px"></colgroup>
+        <thead><tr><th>وصف البنك</th><th>مسمى المصروف</th><th>كود الحساب</th><th>إجراءات</th></tr></thead>
+        <tbody id="exp-table"><tr><td colspan="4"><div class="empty"><i class="ti ti-loader"></i><p>جاري التحميل...</p></div></td></tr></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-<!-- LOCATIONS -->
+<!-- ════ LOCATIONS ════ -->
 <div class="sc" id="sc-locations">
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-    <div class="card">
-      <div class="card-hdr"><div class="card-title">إضافة موقع</div></div>
-      <div class="form-row">
-        <div><label>اسم الموقع</label><input type="text" id="loc-name" placeholder="مثال: NARJIS"></div>
-      </div>
-      <div class="form-row col2">
-        <div><label>النوع</label><select id="loc-type"><option value="موقع رئيسي">موقع رئيسي</option><option value="موقع فرعي">موقع فرعي</option></select></div>
-        <div><label>المدينة</label><input type="text" id="loc-city" placeholder="الرياض" value="الرياض"></div>
-      </div>
-      <button class="btn pri" onclick="addLocation()">حفظ الموقع</button>
-    </div>
-    <div class="card">
-      <div class="card-hdr"><div class="card-title">إحصائيات المواقع</div></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div class="stat blue" style="padding:12px"><div class="stat-lbl">إجمالي</div><div class="stat-val" id="loc-total">0</div></div>
-        <div class="stat gold" style="padding:12px"><div class="stat-lbl">رئيسية</div><div class="stat-val" id="loc-main">0</div></div>
-        <div class="stat green" style="padding:12px"><div class="stat-lbl">فرعية</div><div class="stat-val" id="loc-sub">0</div></div>
-        <div class="stat red" style="padding:12px"><div class="stat-lbl">المدن</div><div class="stat-val" id="loc-cities">—</div></div>
-      </div>
-    </div>
+  <div class="kpi-grid cols4" style="margin-bottom:16px">
+    <div class="kpi blue"><div class="kpi-icon"><i class="ti ti-map-pin"></i></div><div class="kpi-lbl">إجمالي</div><div class="kpi-val" id="loc-total">0</div></div>
+    <div class="kpi gold"><div class="kpi-icon"><i class="ti ti-star"></i></div><div class="kpi-lbl">رئيسية</div><div class="kpi-val" id="loc-main">0</div></div>
+    <div class="kpi green"><div class="kpi-icon"><i class="ti ti-git-branch"></i></div><div class="kpi-lbl">فرعية</div><div class="kpi-val" id="loc-sub">0</div></div>
+    <div class="kpi purple"><div class="kpi-icon"><i class="ti ti-building-community"></i></div><div class="kpi-lbl">المدن</div><div class="kpi-val" id="loc-cities">—</div></div>
   </div>
-  <div class="card" style="padding:0">
-    <table>
-      <colgroup><col><col style="width:120px"><col style="width:120px"><col style="width:70px"></colgroup>
-      <thead><tr><th>اسم الموقع</th><th>النوع</th><th>المدينة</th><th>حذف</th></tr></thead>
-      <tbody id="loc-table"><tr><td colspan="4" class="empty">جاري التحميل...</td></tr></tbody>
-    </table>
+  <div class="card">
+    <div class="toolbar">
+      <button class="btn primary sm" onclick="openModal('modal-add-location')"><i class="ti ti-plus"></i>إضافة موقع</button>
+      <div class="sep"></div>
+      <button class="btn sm ghost" onclick="exportData('locations')"><i class="ti ti-download"></i>تصدير CSV</button>
+      <label class="btn sm ghost" style="cursor:pointer">
+        <i class="ti ti-upload"></i>استيراد CSV
+        <input type="file" accept=".csv" style="display:none" onchange="importData('locations',this)">
+      </label>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <colgroup><col><col style="width:130px"><col style="width:120px"><col style="width:140px"></colgroup>
+        <thead><tr><th>اسم الموقع</th><th>النوع</th><th>المدينة</th><th>إجراءات</th></tr></thead>
+        <tbody id="loc-table"><tr><td colspan="4"><div class="empty"><i class="ti ti-loader"></i><p>جاري التحميل...</p></div></td></tr></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-<!-- MASTER DATA -->
+<!-- ════ MASTER DATA ════ -->
 <div class="sc" id="sc-master">
-  <div class="stats" style="grid-template-columns:repeat(4,minmax(0,1fr))">
-    <div class="stat red"><div class="stat-lbl">موردين</div><div class="stat-val" id="ms-supps">0</div></div>
-    <div class="stat green"><div class="stat-lbl">عملاء</div><div class="stat-val" id="ms-custs">0</div></div>
-    <div class="stat blue"><div class="stat-lbl">مصاريف</div><div class="stat-val" id="ms-exps">0</div></div>
-    <div class="stat gold"><div class="stat-lbl">إجمالي</div><div class="stat-val" id="ms-total">0</div></div>
+  <div class="kpi-grid cols4" style="margin-bottom:16px">
+    <div class="kpi red"><div class="kpi-icon"><i class="ti ti-building-warehouse"></i></div><div class="kpi-lbl">موردين</div><div class="kpi-val" id="ms-supps">0</div></div>
+    <div class="kpi green"><div class="kpi-icon"><i class="ti ti-users"></i></div><div class="kpi-lbl">عملاء</div><div class="kpi-val" id="ms-custs">0</div></div>
+    <div class="kpi blue"><div class="kpi-icon"><i class="ti ti-receipt-2"></i></div><div class="kpi-lbl">مصروفات</div><div class="kpi-val" id="ms-exps">0</div></div>
+    <div class="kpi gold"><div class="kpi-icon"><i class="ti ti-database"></i></div><div class="kpi-lbl">إجمالي السجلات</div><div class="kpi-val" id="ms-total">0</div></div>
   </div>
   <div class="card" style="padding:0">
-    <div style="padding:10px 14px;border-bottom:0.5px solid var(--border)">
+    <div class="search-bar">
+      <i class="ti ti-search search-icon"></i>
       <input type="text" id="master-search" placeholder="بحث في كل السجلات..." oninput="renderMaster()">
     </div>
-    <div id="master-list"><div class="empty">جاري التحميل...</div></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:80px">النوع</th>
+          <th>الاسم في النظام</th>
+          <th>الاسم في البنك</th>
+          <th style="width:70px">كود الحساب</th>
+          <th>اسم الحساب</th>
+        </tr></thead>
+        <tbody id="master-table"><tr><td colspan="5"><div class="empty"><i class="ti ti-loader"></i><p>جاري التحميل...</p></div></td></tr></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-<!-- UPLOAD -->
+<!-- ════ UPLOAD ════ -->
 <div class="sc" id="sc-upload">
   <div class="card">
-    <div class="card-hdr"><div class="card-title">إعدادات الكشف البنكي</div></div>
-    <div class="form-row col3">
-      <div><label>البنك</label>
+    <div class="card-hdr">
+      <div class="card-title"><i class="ti ti-settings"></i>إعدادات الكشف البنكي</div>
+    </div>
+    <div class="form-grid g3">
+      <div class="form-group">
+        <label>البنك</label>
         <select id="bank-select">
           <option value="AlAhli">الأهلي السعودي (AlAhli)</option>
           <option value="Alinma">بنك الإنماء (Alinma)</option>
           <option value="Riyad">بنك الرياض (Riyad)</option>
-          <option value="Auto">كشف تلقائي (Auto)</option>
+          <option value="Auto">كشف تلقائي</option>
         </select>
       </div>
-      <div><label>حساب البنك في الشجرة</label><select id="bank-acc"></select></div>
-      <div><label>ملف الكشف</label><input type="file" id="bank-file" accept=".xlsx,.xls,.csv"></div>
+      <div class="form-group">
+        <label>حساب البنك في الشجرة</label>
+        <select id="bank-acc"></select>
+      </div>
+      <div class="form-group">
+        <label>ملف الكشف (Excel / CSV)</label>
+        <input type="file" id="bank-file" accept=".xlsx,.xls,.csv">
+      </div>
     </div>
-    <button class="btn pri" onclick="uploadStatement()" style="width:100%;padding:12px"><i class="ti ti-upload"></i> معالجة الكشف</button>
-    <div class="progress-wrap" id="upload-progress">
-      <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+    <button class="btn primary lg" onclick="uploadStatement()" style="width:100%;justify-content:center">
+      <i class="ti ti-file-upload"></i>معالجة الكشف وعرض القيود
+    </button>
+    <div class="progress-wrap" id="upload-progress" style="margin-top:12px">
+      <div class="progress"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
       <div class="progress-lbl" id="prog-lbl">جاري المعالجة...</div>
     </div>
   </div>
 
-  <div class="card" id="upload-preview" style="display:none">
-    <div class="card-hdr"><div class="card-title">معاينة الكشف المستخرج</div><span class="badge bg-g" id="upload-count">0 عملية</span></div>
-    <table>
-      <colgroup><col style="width:80px"><col><col style="width:90px"><col style="width:110px"><col style="width:90px"></colgroup>
-      <thead><tr><th>التاريخ</th><th>وصف البنك</th><th>المبلغ</th><th>المطابقة</th><th>الثقة</th></tr></thead>
-      <tbody id="preview-table"></tbody>
-    </table>
-    <div style="margin-top:14px;text-align:left">
-      <button class="btn gold-btn" onclick="nav('review',document.querySelectorAll('.sb-item')[8])">انتقال للمراجعة ←</button>
+  <div id="upload-preview" style="display:none">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title"><i class="ti ti-eye"></i>معاينة أول 10 عمليات</div>
+        <span class="badge blue" id="upload-count">0 عملية</span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>التاريخ</th><th>وصف البنك</th><th>المبلغ</th><th>المطابقة</th><th>الثقة</th></tr></thead>
+          <tbody id="preview-table"></tbody>
+        </table>
+      </div>
+      <div class="mt12" style="text-align:left">
+        <button class="btn gold lg" onclick="nav('review')">
+          الانتقال لمراجعة القيود <i class="ti ti-arrow-left"></i>
+        </button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- REVIEW -->
+<!-- ════ REVIEW ════ -->
 <div class="sc" id="sc-review">
-  <div class="stats" style="grid-template-columns:repeat(4,minmax(0,1fr))">
-    <div class="stat gold"><div class="stat-lbl">إجمالي</div><div class="stat-val" id="rev-total">0</div></div>
-    <div class="stat green"><div class="stat-lbl">معتمدة</div><div class="stat-val" id="rev-approved">0</div></div>
-    <div class="stat" style="border-bottom-color:var(--warn)"><div class="stat-lbl">ثقة متوسطة</div><div class="stat-val" id="rev-mid">0</div></div>
-    <div class="stat red"><div class="stat-lbl">غير محددة</div><div class="stat-val" id="rev-low">0</div></div>
+  <div class="kpi-grid cols4" style="margin-bottom:16px">
+    <div class="kpi gold"><div class="kpi-icon"><i class="ti ti-list-numbers"></i></div><div class="kpi-lbl">إجمالي العمليات</div><div class="kpi-val" id="rev-total">0</div></div>
+    <div class="kpi green"><div class="kpi-icon"><i class="ti ti-circle-check"></i></div><div class="kpi-lbl">معتمدة</div><div class="kpi-val" id="rev-approved">0</div></div>
+    <div class="kpi amber"><div class="kpi-icon"><i class="ti ti-alert-triangle"></i></div><div class="kpi-lbl">ثقة متوسطة</div><div class="kpi-val" id="rev-mid">0</div></div>
+    <div class="kpi red"><div class="kpi-icon"><i class="ti ti-question-mark"></i></div><div class="kpi-lbl">تحتاج مراجعة</div><div class="kpi-val" id="rev-low">0</div></div>
   </div>
-
   <div class="card">
     <div class="card-hdr">
-      <div class="card-title">القيود المقترحة — مجمّعة حسب اليوم</div>
-      <div style="display:flex;gap:6px">
-        <select id="rev-filter" onchange="renderReview()" style="width:130px">
+      <div class="card-title"><i class="ti ti-table-check"></i>القيود المقترحة</div>
+      <div class="card-actions">
+        <select id="rev-filter" onchange="renderReview()" style="width:150px">
           <option value="all">الكل</option>
           <option value="high">ثقة عالية ≥90%</option>
           <option value="mid">ثقة متوسطة</option>
           <option value="low">يدوي</option>
         </select>
-        <button class="btn grn sm" onclick="approveAll()">اعتماد الموثوقة</button>
+        <button class="btn success sm" onclick="approveAll()"><i class="ti ti-check"></i>اعتماد الموثوقة</button>
       </div>
     </div>
-    <div id="review-list"><div class="empty">لا توجد عمليات — ابدأ من "رفع كشف البنك"</div></div>
-    <div style="margin-top:14px;text-align:left">
-      <button class="btn gold-btn" onclick="generateAndGoExport()">توليد القيود والانتقال للتصدير ←</button>
+    <div id="review-list"><div class="empty"><i class="ti ti-file-upload"></i><p>ابدأ من "رفع كشف البنك" أولاً</p></div></div>
+    <div class="mt12" style="text-align:left">
+      <button class="btn gold lg" onclick="generateAndGoExport()">
+        توليد القيود والانتقال للتصدير <i class="ti ti-arrow-left"></i>
+      </button>
     </div>
   </div>
 </div>
 
-<!-- EXPORT -->
+<!-- ════ EXPORT ════ -->
 <div class="sc" id="sc-export">
-  <div class="stats" style="grid-template-columns:repeat(4,minmax(0,1fr))">
-    <div class="stat green"><div class="stat-lbl">سطور القيود</div><div class="stat-val" id="exp-lines">0</div></div>
-    <div class="stat red"><div class="stat-lbl">إجمالي المدين</div><div class="stat-val" id="exp-debit">0</div><div class="stat-sub">ر.س</div></div>
-    <div class="stat green"><div class="stat-lbl">إجمالي الدائن</div><div class="stat-val" id="exp-credit">0</div><div class="stat-sub">ر.س</div></div>
-    <div class="stat gold"><div class="stat-lbl">الميزان</div><div class="stat-val" id="exp-balance">—</div></div>
+  <div class="kpi-grid cols4" style="margin-bottom:16px">
+    <div class="kpi green"><div class="kpi-icon"><i class="ti ti-list"></i></div><div class="kpi-lbl">سطور القيود</div><div class="kpi-val" id="exp-lines">0</div></div>
+    <div class="kpi red"><div class="kpi-icon"><i class="ti ti-arrow-up"></i></div><div class="kpi-lbl">إجمالي المدين</div><div class="kpi-val" id="exp-debit">0</div><div class="kpi-sub">ر.س</div></div>
+    <div class="kpi green"><div class="kpi-icon"><i class="ti ti-arrow-down"></i></div><div class="kpi-lbl">إجمالي الدائن</div><div class="kpi-val" id="exp-credit">0</div><div class="kpi-sub">ر.س</div></div>
+    <div class="kpi gold"><div class="kpi-icon"><i class="ti ti-scale"></i></div><div class="kpi-lbl">الميزان</div><div class="kpi-val" id="exp-balance">—</div></div>
   </div>
-
   <div class="card">
-    <div class="card-hdr"><div class="card-title">معاينة القيود — QuickBooks Journal Import</div></div>
-    <div style="background:#010409;border-radius:8px;padding:14px;font-size:11px;font-family:monospace;color:var(--muted);overflow-x:auto;max-height:280px;overflow-y:auto;margin-bottom:14px" id="export-preview">
-      <div class="empty">لا توجد قيود — ابدأ من "مراجعة القيود"</div>
+    <div class="card-hdr">
+      <div class="card-title"><i class="ti ti-eye"></i>معاينة — QuickBooks Journal Import</div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-      <button class="btn gold-btn" onclick="exportCSV()"><i class="ti ti-download"></i> تصدير CSV — QuickBooks</button>
-      <button class="btn grn" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> تصدير Excel مفصّل</button>
-      <button class="btn pri" onclick="saveToDb()"><i class="ti ti-database"></i> حفظ في قاعدة البيانات</button>
+    <div style="background:var(--bg);border-radius:8px;padding:14px;font-size:11px;font-family:'JetBrains Mono',monospace;
+      color:var(--text3);overflow-x:auto;max-height:250px;overflow-y:auto;margin-bottom:16px;border:1px solid var(--border)" id="export-preview">
+      <div class="empty"><p>لا توجد قيود</p></div>
+    </div>
+    <div class="flex gap10">
+      <button class="btn gold lg" onclick="exportCSV()"><i class="ti ti-download"></i>تصدير CSV — QuickBooks</button>
+      <button class="btn success lg" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i>تصدير Excel مفصّل</button>
+      <button class="btn primary lg" onclick="saveToDb()"><i class="ti ti-device-floppy"></i>حفظ في قاعدة البيانات</button>
     </div>
   </div>
-
   <div class="card">
-    <div class="card-hdr"><div class="card-title">خطوات الرفع على QuickBooks</div></div>
-    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px">
-      <div style="background:#010409;border-radius:8px;padding:14px;border:0.5px solid var(--border)">
-        <div style="color:var(--gold);font-size:20px;font-weight:700;margin-bottom:6px">01</div>
-        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">الإعدادات</div>
-        <div style="font-size:11px;color:var(--muted)">Settings → Import Data → Journal Entries</div>
+    <div class="card-hdr"><div class="card-title"><i class="ti ti-info-circle"></i>خطوات الرفع على QuickBooks</div></div>
+    <div class="grid3">
+      <div style="background:var(--bg);border-radius:8px;padding:14px;border:1px solid var(--border)">
+        <div style="color:var(--gold);font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-bottom:8px">01</div>
+        <div class="bold" style="margin-bottom:4px">فتح الإعدادات</div>
+        <div class="text-muted text-sm">Settings → Import Data → Journal Entries</div>
       </div>
-      <div style="background:#010409;border-radius:8px;padding:14px;border:0.5px solid var(--border)">
-        <div style="color:var(--gold);font-size:20px;font-weight:700;margin-bottom:6px">02</div>
-        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">رفع الملف</div>
-        <div style="font-size:11px;color:var(--muted)">Browse → اختر ملف CSV</div>
+      <div style="background:var(--bg);border-radius:8px;padding:14px;border:1px solid var(--border)">
+        <div style="color:var(--gold);font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-bottom:8px">02</div>
+        <div class="bold" style="margin-bottom:4px">رفع الملف</div>
+        <div class="text-muted text-sm">Browse → اختر ملف CSV → Next</div>
       </div>
-      <div style="background:#010409;border-radius:8px;padding:14px;border:0.5px solid var(--border)">
-        <div style="color:var(--gold);font-size:20px;font-weight:700;margin-bottom:6px">03</div>
-        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">Map الأعمدة</div>
-        <div style="font-size:11px;color:var(--muted)">طابق أعمدة الملف مع QuickBooks</div>
-      </div>
-      <div style="background:#010409;border-radius:8px;padding:14px;border:0.5px solid var(--border)">
-        <div style="color:var(--gold);font-size:20px;font-weight:700;margin-bottom:6px">04</div>
-        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">Start Import</div>
-        <div style="font-size:11px;color:var(--muted)">اضغط Start Import → Done</div>
+      <div style="background:var(--bg);border-radius:8px;padding:14px;border:1px solid var(--border)">
+        <div style="color:var(--gold);font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-bottom:8px">03</div>
+        <div class="bold" style="margin-bottom:4px">Start Import</div>
+        <div class="text-muted text-sm">تحقق من الـ Map → Start Import → Done</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- JOURNALS HISTORY -->
+<!-- ════ JOURNALS ════ -->
 <div class="sc" id="sc-journals">
   <div class="card">
     <div class="card-hdr">
-      <div class="card-title">سجل القيود المحفوظة — معتمدة بعد التوليد</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-        <label style="font-size:11px;color:var(--muted)">من
-          <input type="date" id="jrn-date-from" onchange="renderJournals()" style="width:130px;margin-right:4px">
+      <div class="card-title"><i class="ti ti-history"></i>سجل القيود المحفوظة</div>
+      <div class="card-actions">
+        <input type="date" id="jrn-date-from" onchange="renderJournals()" style="width:140px">
+        <span class="text-muted text-sm">إلى</span>
+        <input type="date" id="jrn-date-to" onchange="renderJournals()" style="width:140px">
+        <button class="btn sm ghost" onclick="clearJrnFilter()"><i class="ti ti-filter-off"></i></button>
+        <div class="sep"></div>
+        <input type="text" id="jrn-search" placeholder="بحث..." oninput="renderJournals()" style="width:160px">
+        <div class="sep"></div>
+        <label class="flex items-center gap6 text-sm" style="cursor:pointer">
+          <input type="checkbox" id="jrn-select-all" onchange="toggleSelectAllJournals(this)">تحديد الكل
         </label>
-        <label style="font-size:11px;color:var(--muted)">إلى
-          <input type="date" id="jrn-date-to" onchange="renderJournals()" style="width:130px;margin-right:4px">
-        </label>
-        <button class="btn sm" onclick="clearJrnDateFilter()">إلغاء الفلتر</button>
-        <input type="text" id="jrn-search" placeholder="بحث..." style="width:160px" oninput="renderJournals()">
-        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px">
-          <input type="checkbox" id="jrn-select-all" onchange="toggleSelectAllJournals(this)"> تحديد الكل
-        </label>
-        <button class="btn sm danger" id="jrn-bulk-delete-btn" onclick="bulkDeleteJournals()" disabled>حذف المحدد (<span id="jrn-selected-count">0</span>)</button>
+        <button class="btn sm danger" id="jrn-bulk-delete-btn" onclick="bulkDeleteJournals()" disabled>
+          <i class="ti ti-trash"></i>حذف المحدد (<span id="jrn-selected-count">0</span>)
+        </button>
       </div>
     </div>
-    <div id="jrn-list"><div class="empty">جاري التحميل...</div></div>
+    <div id="jrn-list"><div class="empty"><i class="ti ti-loader"></i><p>جاري التحميل...</p></div></div>
   </div>
 </div>
 
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ═══════ MODALS ═══════ -->
+
+<!-- Modal: Add Account -->
+<div class="modal-overlay" id="modal-add-account">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title"><i class="ti ti-plus"></i>إضافة حساب جديد</div>
+      <button class="modal-close" onclick="closeModal('modal-add-account')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-grid g2">
+      <div class="form-group"><label>كود الحساب</label><input type="text" id="acc-code" placeholder="مثال: 5110"></div>
+      <div class="form-group"><label>اسم الحساب</label><input type="text" id="acc-name" placeholder="مصاريف وقود"></div>
+    </div>
+    <div class="form-group"><label>نوع الحساب</label>
+      <select id="acc-type">
+        <option>أصول</option><option>خصوم</option><option>إيرادات</option>
+        <option>مصاريف</option><option>حقوق ملكية</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="addAccount()"><i class="ti ti-check"></i>حفظ الحساب</button>
+      <button class="btn ghost" onclick="closeModal('modal-add-account')">إلغاء</button>
+    </div>
+  </div>
 </div>
+
+<!-- Modal: Edit Account -->
+<div class="modal-overlay" id="modal-edit-account">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title"><i class="ti ti-edit"></i>تعديل حساب</div>
+      <button class="modal-close" onclick="closeModal('modal-edit-account')"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="edit-acc-code-orig">
+    <div class="form-grid g2">
+      <div class="form-group"><label>كود الحساب</label><input type="text" id="edit-acc-code"></div>
+      <div class="form-group"><label>اسم الحساب</label><input type="text" id="edit-acc-name"></div>
+    </div>
+    <div class="form-group"><label>نوع الحساب</label>
+      <select id="edit-acc-type">
+        <option>أصول</option><option>خصوم</option><option>إيرادات</option>
+        <option>مصاريف</option><option>حقوق ملكية</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="saveEditAccount()"><i class="ti ti-check"></i>حفظ التعديل</button>
+      <button class="btn ghost" onclick="closeModal('modal-edit-account')">إلغاء</button>
+    </div>
+  </div>
 </div>
+
+<!-- Modal: Add Supplier -->
+<div class="modal-overlay" id="modal-add-supplier">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title"><i class="ti ti-plus"></i>إضافة مورد جديد</div>
+      <button class="modal-close" onclick="closeModal('modal-add-supplier')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-grid g2">
+      <div class="form-group"><label>الاسم في كشف البنك</label><input type="text" id="sup-bank-name" placeholder="كما يظهر في كشف البنك"></div>
+      <div class="form-group"><label>الاسم في النظام</label><input type="text" id="sup-sys-name" placeholder="الاسم المحاسبي"></div>
+    </div>
+    <div class="form-grid g2">
+      <div class="form-group"><label>الحساب</label><select id="sup-acc"></select></div>
+      <div class="form-group"><label>نوع المورد</label><select id="sup-type"><option>Trade</option><option>Non Trade</option></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="addSupplier()"><i class="ti ti-check"></i>حفظ المورد</button>
+      <button class="btn ghost" onclick="closeModal('modal-add-supplier')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit Supplier -->
+<div class="modal-overlay" id="modal-edit-supplier">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title"><i class="ti ti-edit"></i>تعديل مورد</div>
+      <button class="modal-close" onclick="closeModal('modal-edit-supplier')"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="edit-sup-id">
+    <div class="form-grid g2">
+      <div class="form-group"><label>الاسم في كشف البنك</label><input type="text" id="edit-sup-bank"></div>
+      <div class="form-group"><label>الاسم في النظام</label><input type="text" id="edit-sup-sys"></div>
+    </div>
+    <div class="form-grid g2">
+      <div class="form-group"><label>الحساب</label><select id="edit-sup-acc"></select></div>
+      <div class="form-group"><label>نوع المورد</label><select id="edit-sup-type"><option>Trade</option><option>Non Trade</option></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="saveEditSupplier()"><i class="ti ti-check"></i>حفظ التعديل</button>
+      <button class="btn ghost" onclick="closeModal('modal-edit-supplier')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Customer -->
+<div class="modal-overlay" id="modal-add-customer">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title"><i class="ti ti-plus"></i>إضافة عميل جديد</div>
+      <button class="modal-close" onclick="closeModal('modal-add-customer')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-grid g2">
+      <div class="form-group"><label>الاسم في كشف البنك</label><input type="text" id="cust-bank-name" placeholder="كما يظهر في كشف البنك"></div>
+      <div class="form-group"><label>الاسم في النظام</label><input type="text" id="cust-sys-name" placeholder="الاسم المحاسبي"></div>
+    </div>
+    <div class="form-grid g2">
+      <div class="form-group"><label>الحساب</label><select id="cust-acc"></select></div>
+      <div class="form-group"><label>نوع العميل</label><select id="cust-type"><option>Trade</option><option>Non Trade</option></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="addCustomer()"><i class="ti ti-check"></i>حفظ العميل</button>
+      <button class="btn ghost" onclick="closeModal('modal-add-customer')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit Customer -->
+<div class="modal-overlay" id="modal-edit-customer">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title"><i class="ti ti-edit"></i>تعديل عميل</div>
+      <button class="modal-close" onclick="closeModal('modal-edit-customer')"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="edit-cust-id">
+    <div class="form-grid g2">
+      <div class="form-group"><label>الاسم في كشف البنك</label><input type="text" id="edit-cust-bank"></div>
+      <div class="form-group"><label>الاسم في النظام</label><input type="text" id="edit-cust-sys"></div>
+    </div>
+    <div class="form-grid g2">
+      <div class="form-group"><label>الحساب</label><select id="edit-cust-acc"></select></div>
+      <div class="form-group"><label>نوع العميل</label><select id="edit-cust-type"><option>Trade</option><option>Non Trade</option></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="saveEditCustomer()"><i class="ti ti-check"></i>حفظ التعديل</button>
+      <button class="btn ghost" onclick="closeModal('modal-edit-customer')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Expense -->
+<div class="modal-overlay" id="modal-add-expense">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title"><i class="ti ti-plus"></i>إضافة بند مصروف</div>
+      <button class="modal-close" onclick="closeModal('modal-add-expense')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-group" style="margin-bottom:12px"><label>الوصف في كشف البنك</label><input type="text" id="exp-bank" placeholder="مثال: GOSI أو MOI"></div>
+    <div class="form-group" style="margin-bottom:12px"><label>مسمى المصروف</label><input type="text" id="exp-cat" placeholder="رسوم تأمينات"></div>
+    <div class="form-group"><label>الحساب</label><select id="exp-acc"></select></div>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="addExpense()"><i class="ti ti-check"></i>حفظ البند</button>
+      <button class="btn ghost" onclick="closeModal('modal-add-expense')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit Expense -->
+<div class="modal-overlay" id="modal-edit-expense">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title"><i class="ti ti-edit"></i>تعديل بند مصروف</div>
+      <button class="modal-close" onclick="closeModal('modal-edit-expense')"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="edit-exp-id">
+    <div class="form-group" style="margin-bottom:12px"><label>الوصف في كشف البنك</label><input type="text" id="edit-exp-bank"></div>
+    <div class="form-group" style="margin-bottom:12px"><label>مسمى المصروف</label><input type="text" id="edit-exp-cat"></div>
+    <div class="form-group"><label>الحساب</label><select id="edit-exp-acc"></select></div>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="saveEditExpense()"><i class="ti ti-check"></i>حفظ التعديل</button>
+      <button class="btn ghost" onclick="closeModal('modal-edit-expense')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Location -->
+<div class="modal-overlay" id="modal-add-location">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title"><i class="ti ti-plus"></i>إضافة موقع جديد</div>
+      <button class="modal-close" onclick="closeModal('modal-add-location')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-group" style="margin-bottom:12px"><label>اسم الموقع</label><input type="text" id="loc-name" placeholder="مثال: NARJIS"></div>
+    <div class="form-grid g2">
+      <div class="form-group"><label>النوع</label>
+        <select id="loc-type"><option value="موقع رئيسي">موقع رئيسي</option><option value="موقع فرعي">موقع فرعي</option></select>
+      </div>
+      <div class="form-group"><label>المدينة</label><input type="text" id="loc-city" placeholder="الرياض" value="الرياض"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="addLocation()"><i class="ti ti-check"></i>حفظ الموقع</button>
+      <button class="btn ghost" onclick="closeModal('modal-add-location')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit Location -->
+<div class="modal-overlay" id="modal-edit-location">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title"><i class="ti ti-edit"></i>تعديل موقع</div>
+      <button class="modal-close" onclick="closeModal('modal-edit-location')"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="edit-loc-id">
+    <div class="form-group" style="margin-bottom:12px"><label>اسم الموقع</label><input type="text" id="edit-loc-name"></div>
+    <div class="form-grid g2">
+      <div class="form-group"><label>النوع</label>
+        <select id="edit-loc-type"><option value="موقع رئيسي">موقع رئيسي</option><option value="موقع فرعي">موقع فرعي</option></select>
+      </div>
+      <div class="form-group"><label>المدينة</label><input type="text" id="edit-loc-city"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="saveEditLocation()"><i class="ti ti-check"></i>حفظ التعديل</button>
+      <button class="btn ghost" onclick="closeModal('modal-edit-location')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit Tx in Review -->
+<div class="modal-overlay" id="modal-edit-tx">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title"><i class="ti ti-edit"></i>تعديل العملية</div>
+      <button class="modal-close" onclick="closeModal('modal-edit-tx')"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="edit-tx-idx">
+    <div class="form-group" style="margin-bottom:12px"><label>اسم الطرف</label><input type="text" id="edit-tx-name"></div>
+    <div class="form-group" style="margin-bottom:12px"><label>الحساب</label><select id="edit-tx-acc"></select></div>
+    <div class="form-group"><label>المبلغ</label><input type="number" id="edit-tx-amount" step="0.01"></div>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="saveTxEdit()"><i class="ti ti-check"></i>حفظ</button>
+      <button class="btn ghost" onclick="closeModal('modal-edit-tx')">إلغاء</button>
+    </div>
+  </div>
 </div>
 
 <script>
+/* ═══════════════════════════════════════
+   STATE
+════════════════════════════════════════ */
 let ACCOUNT_OPTIONS = [];
 let LOCATION_OPTIONS = [];
 let reviewData = [];
 let exportLines = [];
+let _accounts = [], _suppliers = [], _customers = [], _expenses = [], _locations = [], _master = [];
+let _journals = [], _jrnSelected = new Set(), _jrnEditingLine = null;
+let _openDays = new Set();
+const PAGE_ICONS = {
+  dashboard:'ti-layout-dashboard', accounts:'ti-binary-tree-2', suppliers:'ti-building-warehouse',
+  customers:'ti-users', expenses:'ti-receipt-2', locations:'ti-map-pin', master:'ti-database-search',
+  upload:'ti-file-upload', review:'ti-table-check', export:'ti-file-export', journals:'ti-history'
+};
+const PAGE_TITLES = {
+  dashboard:'لوحة التحكم', accounts:'شجرة الحسابات', suppliers:'الموردين',
+  customers:'العملاء', expenses:'بنود المصروفات', locations:'المواقع',
+  master:'البيانات الموحدة', upload:'رفع كشف البنك', review:'مراجعة القيود',
+  export:'التصدير', journals:'سجل القيود'
+};
 
-function nav(page, el) {
-  document.querySelectorAll('.sc').forEach(s=>s.classList.remove('on'));
-  document.querySelectorAll('.sb-item').forEach(s=>s.classList.remove('active'));
-  document.getElementById('sc-'+page).classList.add('on');
-  if(el) el.classList.add('active');
-  const titles={dashboard:'لوحة التحكم',accounts:'شجرة الحسابات',suppliers:'الموردين',
-    customers:'العملاء',expenses:'المصروفات',locations:'المواقع',
-    master:'البيانات الموحدة',upload:'رفع كشف البنك',review:'مراجعة القيود',
-    export:'التصدير',journals:'سجل القيود'};
-  document.getElementById('tb-title').textContent = titles[page]||page;
+/* ═══════════════════════════════════════
+   NAVIGATION
+════════════════════════════════════════ */
+function nav(page) {
+  document.querySelectorAll('.sc').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.sb-item').forEach(s => s.classList.remove('active'));
+  document.getElementById('sc-' + page)?.classList.add('on');
+  document.querySelector(`.sb-item[data-page="${page}"]`)?.classList.add('active');
+  const icon = PAGE_ICONS[page] || 'ti-circle';
+  document.getElementById('tb-title').innerHTML = `<i class="ti ${icon}"></i>${PAGE_TITLES[page] || page}`;
 
-  if(page==='dashboard') loadDashboard();
-  if(page==='accounts') renderAccounts();
-  if(page==='suppliers') renderSuppliers();
-  if(page==='customers') renderCustomers();
-  if(page==='expenses') renderExpenses();
-  if(page==='locations') renderLocations();
-  if(page==='master') renderMaster();
-  if(page==='review') renderReview();
-  if(page==='journals') renderJournals();
-  if(page==='upload') loadAccountOptions();
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'accounts') { _accounts = []; renderAccounts(); }
+  if (page === 'suppliers') { _suppliers = []; renderSuppliers(); }
+  if (page === 'customers') { _customers = []; renderCustomers(); }
+  if (page === 'expenses') { _expenses = []; renderExpenses(); }
+  if (page === 'locations') { _locations = []; renderLocations(); }
+  if (page === 'master') { _master = []; renderMaster(); }
+  if (page === 'review') renderReview();
+  if (page === 'journals') renderJournals();
+  if (page === 'upload') loadAccountOptions();
+}
+document.querySelectorAll('.sb-item[data-page]').forEach(el => {
+  el.addEventListener('click', () => nav(el.dataset.page));
+});
+function refreshPage() { nav(document.querySelector('.sb-item.active')?.dataset.page || 'dashboard'); }
+
+/* ═══════════════════════════════════════
+   NOTIFICATIONS
+════════════════════════════════════════ */
+function showNotif(msg, type = 'success') {
+  const wrap = document.getElementById('notif-wrap');
+  const el = document.createElement('div');
+  el.className = `notif ${type}`;
+  const icon = type === 'success' ? 'ti-check' : type === 'error' ? 'ti-x' : 'ti-info-circle';
+  el.innerHTML = `<i class="ti ${icon}"></i>${msg}`;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
 }
 
-function showNotif(msg, type='success') {
-  const el = document.getElementById('notif');
-  el.textContent = msg;
-  el.className = 'notification show' + (type==='error'?' err-notif':'');
-  setTimeout(()=>el.classList.remove('show'), 3500);
+/* ═══════════════════════════════════════
+   MODALS
+════════════════════════════════════════ */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  setTimeout(() => {
+    const first = document.getElementById(id).querySelector('input[type=text],input[type=number]');
+    if (first) first.focus();
+  }, 50);
 }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
 
-function fmtNum(n){ return Number(n||0).toLocaleString(undefined,{maximumFractionDigits:2}); }
+/* ═══════════════════════════════════════
+   HELPERS
+════════════════════════════════════════ */
+function fmt(n) { return Number(n || 0).toLocaleString('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmtShort(n) {
+  const v = Number(n || 0);
+  if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+  return v.toLocaleString();
+}
+function dlBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+const typeColors = { 'أصول': 'blue', 'خصوم': 'red', 'إيرادات': 'green', 'مصاريف': 'amber', 'حقوق ملكية': 'purple' };
 
-async function loadDashboard(){
-  try{
-    const r = await fetch('/api/dashboard');
-    const d = await r.json();
-    document.getElementById('s-accs').textContent = d.stats.accounts;
-    document.getElementById('s-supps').textContent = d.stats.suppliers;
-    document.getElementById('s-custs').textContent = d.stats.customers;
-    document.getElementById('s-exps').textContent = d.stats.expenses;
-    document.getElementById('dash-credit').textContent = fmtNum(d.total_credit);
-    document.getElementById('dash-debit').textContent = fmtNum(d.total_debit);
-    document.getElementById('dash-net').textContent = fmtNum(d.total_credit - d.total_debit);
+/* ═══════════════════════════════════════
+   DASHBOARD
+════════════════════════════════════════ */
+async function loadDashboard() {
+  try {
+    const [dash, cf] = await Promise.all([fetch('/api/dashboard').then(r => r.json()), fetch('/api/dashboard/cashflow').then(r => r.json()).catch(() => [])]);
+    document.getElementById('s-accs').textContent = dash.stats.accounts;
+    document.getElementById('s-supps').textContent = dash.stats.suppliers;
+    document.getElementById('s-custs').textContent = dash.stats.customers;
+    document.getElementById('s-exps').textContent = dash.stats.expenses;
 
+    const net = dash.total_credit - dash.total_debit;
+    document.getElementById('dash-credit').textContent = fmtShort(dash.total_credit) + ' ر.س';
+    document.getElementById('dash-debit').textContent = fmtShort(dash.total_debit) + ' ر.س';
+    document.getElementById('dash-net').textContent = (net >= 0 ? '+' : '') + fmtShort(net) + ' ر.س';
+    document.getElementById('dash-net').style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
+
+    // Cash Flow Chart
+    renderCashFlowChart(cf);
+
+    // Recent Journals
     const tbody = document.getElementById('dash-recent');
-    if(d.recent_journals.length===0){
-      tbody.innerHTML = '<tr><td colspan="5" class="empty">لا توجد قيود مرحّلة بعد</td></tr>';
+    if (!dash.recent_journals.length) {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><i class="ti ti-inbox"></i><p>لا توجد قيود مرحّلة بعد</p></div></td></tr>';
     } else {
-      tbody.innerHTML = d.recent_journals.map(j=>`
-        <tr>
-          <td>${j.journal_date||''}</td>
-          <td style="font-size:11px;color:var(--muted)">${j.account_name||''}</td>
-          <td>${j.entity_name||''}</td>
-          <td>${j.debit?fmtNum(j.debit):'—'}</td>
-          <td>${j.credit?fmtNum(j.credit):'—'}</td>
-        </tr>`).join('');
-    }
-  }catch(e){ console.error(e); }
-}
-
-let _accounts = [];
-async function renderAccounts(){
-  if(_accounts.length===0){
-    const r = await fetch('/api/accounts');
-    _accounts = await r.json();
-  }
-  const q = (document.getElementById('acc-search')?.value||'').toLowerCase();
-  const tf = document.getElementById('acc-type-filter')?.value||'';
-  const tbody = document.getElementById('acc-table');
-  const filtered = _accounts.filter(a=>
-    (a.acc_name.toLowerCase().includes(q)||a.acc_code.includes(q)) &&
-    (!tf||a.acc_type===tf)
-  );
-  if(filtered.length===0){ tbody.innerHTML='<tr><td colspan="4" class="empty">لا توجد نتائج</td></tr>'; return; }
-  const typeColor={'أصول':'bg-b','خصوم':'bg-r','إيرادات':'bg-g','مصاريف':'bg-a','حقوق ملكية':'bg-m'};
-  tbody.innerHTML = filtered.map(a=>`
-    <tr>
-      <td style="font-family:monospace;color:var(--gold)">${a.acc_code}</td>
-      <td>${a.acc_name}</td>
-      <td><span class="badge ${typeColor[a.acc_type]||'bg-m'}">${a.acc_type||'—'}</span></td>
-      <td><button class="btn sm danger" onclick="delAccount('${a.acc_code}')">حذف</button></td>
-    </tr>`).join('');
-}
-
-async function addAccount(){
-  const code=document.getElementById('acc-code').value.trim();
-  const name=document.getElementById('acc-name').value.trim();
-  const acc_type=document.getElementById('acc-type').value;
-  if(!code||!name){showNotif('اكمل البيانات','error');return;}
-  const r = await fetch('/api/accounts',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({acc_code:code,acc_name:name,acc_type})});
-  const d = await r.json();
-  if(d.error){showNotif(d.error,'error');return;}
-  document.getElementById('acc-code').value='';
-  document.getElementById('acc-name').value='';
-  _accounts=[]; ACCOUNT_OPTIONS=[];
-  renderAccounts();
-  showNotif(`تم إضافة الحساب ${code} - ${name}`);
-}
-
-async function delAccount(code){
-  await fetch('/api/accounts/'+code,{method:'DELETE'});
-  _accounts=[]; ACCOUNT_OPTIONS=[];
-  renderAccounts();
-  showNotif('تم الحذف');
-}
-
-async function loadAccountOptions(){
-  if(ACCOUNT_OPTIONS.length===0){
-    const r = await fetch('/api/account-options');
-    ACCOUNT_OPTIONS = await r.json();
-  }
-  if(LOCATION_OPTIONS.length===0){
-    const r2 = await fetch('/api/location-options');
-    LOCATION_OPTIONS = await r2.json();
-  }
-  document.querySelectorAll('#sup-acc,#cust-acc,#exp-acc,#bank-acc').forEach(sel=>{
-    if(sel.options.length===0){
-      sel.innerHTML = ACCOUNT_OPTIONS.map(o=>`<option value="${o}">${o}</option>`).join('');
-    }
-  });
-}
-
-let _suppliers = [];
-async function renderSuppliers(){
-  await loadAccountOptions();
-  if(_suppliers.length===0){
-    const r = await fetch('/api/suppliers');
-    _suppliers = await r.json();
-  }
-  const q=(document.getElementById('sup-search')?.value||'').toLowerCase();
-  const tbody=document.getElementById('sup-table');
-  const filtered=_suppliers.filter(s=>
-    s.bank_name.toLowerCase().includes(q)||s.sys_name.toLowerCase().includes(q));
-  if(filtered.length===0){tbody.innerHTML='<tr><td colspan="4" class="empty">لا توجد نتائج</td></tr>';return;}
-  tbody.innerHTML=filtered.map(s=>`
-    <tr>
-      <td title="${s.bank_name}">${s.bank_name}</td>
-      <td title="${s.sys_name}">${s.sys_name}</td>
-      <td style="font-size:11px;color:var(--muted)" title="${s.acc_link}">${s.acc_link}</td>
-      <td><button class="btn sm danger" onclick="delSupplier(${s.id})">حذف</button></td>
-    </tr>`).join('');
-}
-
-async function addSupplier(){
-  const bank_name=document.getElementById('sup-bank-name').value.trim();
-  const sys_name=document.getElementById('sup-sys-name').value.trim();
-  const acc_link=document.getElementById('sup-acc').value;
-  const sup_type=document.getElementById('sup-type').value;
-  if(!bank_name||!sys_name){showNotif('اكمل البيانات','error');return;}
-  const r=await fetch('/api/suppliers',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({bank_name,sys_name,acc_link,sup_type})});
-  const d=await r.json();
-  if(d.error){showNotif(d.error,'error');return;}
-  document.getElementById('sup-bank-name').value='';
-  document.getElementById('sup-sys-name').value='';
-  _suppliers=[];
-  supTab('list',document.querySelectorAll('#sc-suppliers .tab')[0]);
-  showNotif(`تم إضافة المورد: ${sys_name}`);
-}
-
-async function delSupplier(id){
-  await fetch('/api/suppliers/'+id,{method:'DELETE'});
-  _suppliers=[];
-  renderSuppliers();
-  showNotif('تم الحذف');
-}
-
-function supTab(tab, el){
-  document.getElementById('sup-list').style.display=tab==='list'?'block':'none';
-  document.getElementById('sup-add').style.display=tab==='add'?'block':'none';
-  document.querySelectorAll('#sc-suppliers .tab').forEach(t=>t.classList.remove('on'));
-  if(el)el.classList.add('on');
-  if(tab==='list')renderSuppliers();
-  if(tab==='add')loadAccountOptions();
-}
-
-let _customers = [];
-async function renderCustomers(){
-  await loadAccountOptions();
-  if(_customers.length===0){
-    const r = await fetch('/api/customers');
-    _customers = await r.json();
-  }
-  const q=(document.getElementById('cust-search')?.value||'').toLowerCase();
-  const tbody=document.getElementById('cust-table');
-  const filtered=_customers.filter(c=>
-    c.bank_name.toLowerCase().includes(q)||c.sys_name.toLowerCase().includes(q));
-  if(filtered.length===0){tbody.innerHTML='<tr><td colspan="4" class="empty">لا توجد نتائج</td></tr>';return;}
-  tbody.innerHTML=filtered.map(c=>`
-    <tr>
-      <td>${c.bank_name}</td><td>${c.sys_name}</td>
-      <td style="font-size:11px;color:var(--muted)">${c.acc_link}</td>
-      <td><button class="btn sm danger" onclick="delCustomer(${c.id})">حذف</button></td>
-    </tr>`).join('');
-}
-
-async function addCustomer(){
-  const bank_name=document.getElementById('cust-bank-name').value.trim();
-  const sys_name=document.getElementById('cust-sys-name').value.trim();
-  const acc_link=document.getElementById('cust-acc').value;
-  const cust_type=document.getElementById('cust-type').value;
-  if(!bank_name||!sys_name){showNotif('اكمل البيانات','error');return;}
-  const r=await fetch('/api/customers',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({bank_name,sys_name,acc_link,cust_type})});
-  const d=await r.json();
-  if(d.error){showNotif(d.error,'error');return;}
-  document.getElementById('cust-bank-name').value='';
-  document.getElementById('cust-sys-name').value='';
-  _customers=[];
-  custTab('list',document.querySelectorAll('#sc-customers .tab')[0]);
-  showNotif(`تم إضافة العميل: ${sys_name}`);
-}
-
-async function delCustomer(id){
-  await fetch('/api/customers/'+id,{method:'DELETE'});
-  _customers=[];
-  renderCustomers();
-  showNotif('تم الحذف');
-}
-
-function custTab(tab,el){
-  document.getElementById('cust-list').style.display=tab==='list'?'block':'none';
-  document.getElementById('cust-add').style.display=tab==='add'?'block':'none';
-  document.querySelectorAll('#sc-customers .tab').forEach(t=>t.classList.remove('on'));
-  if(el)el.classList.add('on');
-  if(tab==='list')renderCustomers();
-  if(tab==='add')loadAccountOptions();
-}
-
-let _expenses = [];
-async function renderExpenses(){
-  await loadAccountOptions();
-  if(_expenses.length===0){
-    const r = await fetch('/api/expenses');
-    _expenses = await r.json();
-  }
-  const q=(document.getElementById('exp-search')?.value||'').toLowerCase();
-  const tbody=document.getElementById('exp-table');
-  const filtered=_expenses.filter(e=>
-    (e.bank_description||'').toLowerCase().includes(q)||(e.expense_category||'').toLowerCase().includes(q));
-  if(filtered.length===0){tbody.innerHTML='<tr><td colspan="4" class="empty">لا توجد نتائج</td></tr>';return;}
-  tbody.innerHTML=filtered.map(e=>`
-    <tr>
-      <td>${e.bank_description||''}</td><td>${e.expense_category||''}</td>
-      <td style="font-size:11px;color:var(--muted)">${e.acc_link||''}</td>
-      <td><button class="btn sm danger" onclick="delExpense(${e.id})">حذف</button></td>
-    </tr>`).join('');
-}
-
-async function addExpense(){
-  const bank_description=document.getElementById('exp-bank').value.trim();
-  const expense_category=document.getElementById('exp-cat').value.trim();
-  const acc_link=document.getElementById('exp-acc').value;
-  if(!bank_description){showNotif('اكمل البيانات','error');return;}
-  const r=await fetch('/api/expenses',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({bank_description,expense_category,acc_link})});
-  const d=await r.json();
-  if(d.error){showNotif(d.error,'error');return;}
-  document.getElementById('exp-bank').value='';
-  document.getElementById('exp-cat').value='';
-  _expenses=[];
-  renderExpenses();
-  showNotif(`تم إضافة بند: ${expense_category||bank_description}`);
-}
-
-async function delExpense(id){
-  await fetch('/api/expenses/'+id,{method:'DELETE'});
-  _expenses=[];
-  renderExpenses();
-  showNotif('تم الحذف');
-}
-
-let _locations = [];
-async function renderLocations(){
-  if(_locations.length===0){
-    const r = await fetch('/api/locations');
-    _locations = await r.json();
-  }
-  const tbody=document.getElementById('loc-table');
-  if(_locations.length===0){tbody.innerHTML='<tr><td colspan="4" class="empty">لا توجد مواقع</td></tr>';}
-  else{
-    tbody.innerHTML=_locations.map(l=>`
-      <tr>
-        <td>${l.name}</td>
-        <td><span class="badge ${(l.is_main||'').includes('رئيسي')?'bg-b':'bg-m'}">${l.is_main||'—'}</span></td>
-        <td>${l.city||'الرياض'}</td>
-        <td><button class="btn sm danger" onclick="delLocation(${l.id})">حذف</button></td>
+      tbody.innerHTML = dash.recent_journals.map(j => `<tr>
+        <td class="tbl-code">${j.journal_date || ''}</td>
+        <td class="tbl-muted">${(j.account_name || '').substring(0, 25)}</td>
+        <td>${j.entity_name || ''}</td>
+        <td class="text-red mono">${j.debit ? fmt(j.debit) : '—'}</td>
+        <td class="text-green mono">${j.credit ? fmt(j.credit) : '—'}</td>
       </tr>`).join('');
+    }
+  } catch (e) { console.error(e); }
+}
+
+function renderCashFlowChart(data) {
+  const wrap = document.getElementById('cf-chart');
+  if (!data || !data.length) {
+    wrap.innerHTML = '<div class="text-muted text-sm" style="padding:20px 0">لا توجد بيانات كافية للرسم البياني</div>';
+    return;
   }
-  const main=_locations.filter(l=>(l.is_main||'').includes('رئيسي')).length;
-  document.getElementById('loc-total').textContent=_locations.length;
-  document.getElementById('loc-main').textContent=main;
-  document.getElementById('loc-sub').textContent=_locations.length-main;
-  const cities=new Set(_locations.map(l=>l.city||'الرياض'));
-  document.getElementById('loc-cities').textContent=cities.size;
-}
-
-async function addLocation(){
-  const name=document.getElementById('loc-name').value.trim();
-  const is_main=document.getElementById('loc-type').value;
-  const city=document.getElementById('loc-city').value.trim()||'الرياض';
-  if(!name){showNotif('اكتب اسم الموقع','error');return;}
-  const r=await fetch('/api/locations',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({name,is_main,city})});
-  const d=await r.json();
-  if(d.error){showNotif(d.error,'error');return;}
-  document.getElementById('loc-name').value='';
-  _locations=[]; LOCATION_OPTIONS=[];
-  renderLocations();
-  showNotif(`تم إضافة الموقع: ${name}`);
-}
-
-async function delLocation(id){
-  await fetch('/api/locations/'+id,{method:'DELETE'});
-  _locations=[]; LOCATION_OPTIONS=[];
-  renderLocations();
-  showNotif('تم الحذف');
-}
-
-let _master = [];
-async function renderMaster(){
-  if(_master.length===0){
-    const r = await fetch('/api/master');
-    _master = await r.json();
-  }
-  const q=(document.getElementById('master-search')?.value||'').toLowerCase();
-  const colors={'مورد':'#da3633','عميل':'#2ea043','مصروف':'#388bfd'};
-  const filtered=_master.filter(x=>!q||x.sys.toLowerCase().includes(q)||x.bank.toLowerCase().includes(q));
-
-  document.getElementById('ms-supps').textContent=_master.filter(x=>x.type==='مورد').length;
-  document.getElementById('ms-custs').textContent=_master.filter(x=>x.type==='عميل').length;
-  document.getElementById('ms-exps').textContent=_master.filter(x=>x.type==='مصروف').length;
-  document.getElementById('ms-total').textContent=_master.length;
-
-  const list=document.getElementById('master-list');
-  if(filtered.length===0){list.innerHTML='<div class="empty">لا توجد نتائج</div>';return;}
-  list.innerHTML=filtered.map(x=>{
-    const color=colors[x.type]||'#888';
-    const accCode=(x.acc||'').split(' - ')[0]||'—';
-    return `<div class="master-row">
-      <div class="master-avatar" style="background:${color}22;color:${color}">${x.type[0]}</div>
-      <div style="flex:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">${x.sys}</div>
-      <div style="flex:2;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🏦 ${x.bank}</div>
-      <div style="flex:0.8;text-align:center"><span class="badge" style="background:${color}22;color:${color}">${x.type}</span></div>
-      <div style="font-family:monospace;font-size:11px;color:var(--gold);background:#21262d;padding:3px 8px;border-radius:5px">${accCode}</div>
+  const maxVal = Math.max(...data.map(d => Math.max(d.inflow || 0, d.outflow || 0)), 1);
+  wrap.innerHTML = data.map(d => {
+    const inH = Math.round(((d.inflow || 0) / maxVal) * 75);
+    const outH = Math.round(((d.outflow || 0) / maxVal) * 75);
+    const lbl = (d.month || '').substring(5); // MM
+    return `<div class="cf-bar-group">
+      <div class="cf-bars">
+        <div class="cf-bar inflow" style="height:${inH}px" title="إيرادات: ${fmt(d.inflow)} ر.س"></div>
+        <div class="cf-bar outflow" style="height:${outH}px" title="مدفوعات: ${fmt(d.outflow)} ر.س"></div>
+      </div>
+      <div class="cf-lbl">${lbl}</div>
     </div>`;
   }).join('');
 }
 
-async function uploadStatement(){
-  const fileInput=document.getElementById('bank-file');
-  if(!fileInput.files.length){showNotif('اختر ملف الكشف أولاً','error');return;}
+/* ═══════════════════════════════════════
+   ACCOUNT OPTIONS (shared)
+════════════════════════════════════════ */
+async function loadAccountOptions(force = false) {
+  if (!force && ACCOUNT_OPTIONS.length > 0) return;
+  const [ao, lo] = await Promise.all([fetch('/api/account-options').then(r => r.json()), fetch('/api/location-options').then(r => r.json())]);
+  ACCOUNT_OPTIONS = ao;
+  LOCATION_OPTIONS = lo;
+  // populate all account selects
+  ['sup-acc', 'cust-acc', 'exp-acc', 'bank-acc', 'edit-sup-acc', 'edit-cust-acc', 'edit-exp-acc', 'edit-tx-acc'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel) sel.innerHTML = ACCOUNT_OPTIONS.map(o => `<option value="${o}">${o}</option>`).join('');
+  });
+}
 
-  const prog=document.getElementById('upload-progress');
-  const fill=document.getElementById('prog-fill');
-  const lbl=document.getElementById('prog-lbl');
-  prog.style.display='block';
-  fill.style.width='20%'; lbl.textContent='جاري رفع الملف...';
+/* ═══════════════════════════════════════
+   ACCOUNTS
+════════════════════════════════════════ */
+async function renderAccounts() {
+  if (!_accounts.length) {
+    const r = await fetch('/api/accounts'); _accounts = await r.json();
+  }
+  const q = (document.getElementById('acc-search')?.value || '').toLowerCase();
+  const tf = document.getElementById('acc-type-filter')?.value || '';
+  const filtered = _accounts.filter(a =>
+    (a.acc_name.toLowerCase().includes(q) || a.acc_code.includes(q)) && (!tf || a.acc_type === tf)
+  );
+  const tbody = document.getElementById('acc-table');
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><i class="ti ti-search"></i><p>لا توجد نتائج</p></div></td></tr>'; return; }
+  tbody.innerHTML = filtered.map(a => `<tr>
+    <td><span class="tbl-code">${a.acc_code}</span></td>
+    <td>${a.acc_name}</td>
+    <td><span class="badge ${typeColors[a.acc_type] || 'muted'}">${a.acc_type || '—'}</span></td>
+    <td>
+      <button class="btn sm ghost icon-only" onclick="openEditAccount('${a.acc_code}')"><i class="ti ti-edit"></i></button>
+      <button class="btn sm danger icon-only" onclick="delAccount('${a.acc_code}')"><i class="ti ti-trash"></i></button>
+    </td>
+  </tr>`).join('');
+}
+async function addAccount() {
+  const code = document.getElementById('acc-code').value.trim();
+  const name = document.getElementById('acc-name').value.trim();
+  const acc_type = document.getElementById('acc-type').value;
+  if (!code || !name) { showNotif('اكمل البيانات', 'error'); return; }
+  const r = await fetch('/api/accounts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ acc_code: code, acc_name: name, acc_type }) });
+  const d = await r.json();
+  if (d.error) { showNotif(d.error, 'error'); return; }
+  document.getElementById('acc-code').value = ''; document.getElementById('acc-name').value = '';
+  _accounts = []; ACCOUNT_OPTIONS = [];
+  closeModal('modal-add-account'); renderAccounts();
+  showNotif(`تم إضافة الحساب: ${code} - ${name}`);
+}
+function openEditAccount(code) {
+  const a = _accounts.find(x => x.acc_code === code); if (!a) return;
+  document.getElementById('edit-acc-code-orig').value = a.acc_code;
+  document.getElementById('edit-acc-code').value = a.acc_code;
+  document.getElementById('edit-acc-name').value = a.acc_name;
+  document.getElementById('edit-acc-type').value = a.acc_type || 'أصول';
+  openModal('modal-edit-account');
+}
+async function saveEditAccount() {
+  const orig = document.getElementById('edit-acc-code-orig').value;
+  const code = document.getElementById('edit-acc-code').value.trim();
+  const name = document.getElementById('edit-acc-name').value.trim();
+  const acc_type = document.getElementById('edit-acc-type').value;
+  // Delete old and add new (since SQLite doesn't allow PK update easily)
+  await fetch('/api/accounts/' + orig, { method: 'DELETE' });
+  await fetch('/api/accounts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ acc_code: code, acc_name: name, acc_type }) });
+  _accounts = []; ACCOUNT_OPTIONS = [];
+  closeModal('modal-edit-account'); renderAccounts();
+  showNotif('تم تحديث الحساب');
+}
+async function delAccount(code) {
+  if (!confirm('حذف الحساب ' + code + '؟')) return;
+  await fetch('/api/accounts/' + code, { method: 'DELETE' });
+  _accounts = []; ACCOUNT_OPTIONS = []; renderAccounts(); showNotif('تم حذف الحساب');
+}
 
-  const fd=new FormData();
+/* ═══════════════════════════════════════
+   SUPPLIERS
+════════════════════════════════════════ */
+async function renderSuppliers() {
+  await loadAccountOptions();
+  if (!_suppliers.length) { const r = await fetch('/api/suppliers'); _suppliers = await r.json(); }
+  const q = (document.getElementById('sup-search')?.value || '').toLowerCase();
+  const filtered = _suppliers.filter(s => s.bank_name.toLowerCase().includes(q) || s.sys_name.toLowerCase().includes(q));
+  const tbody = document.getElementById('sup-table');
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><i class="ti ti-search"></i><p>لا توجد نتائج</p></div></td></tr>'; return; }
+  tbody.innerHTML = filtered.map(s => {
+    const accCode = (s.acc_link || '').split(' - ')[0] || '—';
+    const accName = (s.acc_link || '').split(' - ').slice(1).join(' - ') || '—';
+    return `<tr>
+      <td title="${s.bank_name}">${s.bank_name}</td>
+      <td class="bold">${s.sys_name}</td>
+      <td><span class="tbl-code">${accCode}</span> <span class="tbl-muted">${accName}</span></td>
+      <td><span class="badge ${s.sup_type === 'Trade' ? 'blue' : 'amber'}">${s.sup_type || 'Trade'}</span></td>
+      <td>
+        <button class="btn sm ghost icon-only" onclick="openEditSupplier(${s.id})"><i class="ti ti-edit"></i></button>
+        <button class="btn sm danger icon-only" onclick="delSupplier(${s.id})"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+async function addSupplier() {
+  const bank_name = document.getElementById('sup-bank-name').value.trim();
+  const sys_name = document.getElementById('sup-sys-name').value.trim();
+  const acc_link = document.getElementById('sup-acc').value;
+  const sup_type = document.getElementById('sup-type').value;
+  if (!bank_name || !sys_name) { showNotif('اكمل البيانات', 'error'); return; }
+  const r = await fetch('/api/suppliers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bank_name, sys_name, acc_link, sup_type }) });
+  const d = await r.json();
+  if (d.error) { showNotif(d.error, 'error'); return; }
+  document.getElementById('sup-bank-name').value = ''; document.getElementById('sup-sys-name').value = '';
+  _suppliers = []; closeModal('modal-add-supplier'); renderSuppliers();
+  showNotif(`تم إضافة المورد: ${sys_name}`);
+}
+function openEditSupplier(id) {
+  const s = _suppliers.find(x => x.id === id); if (!s) return;
+  document.getElementById('edit-sup-id').value = id;
+  document.getElementById('edit-sup-bank').value = s.bank_name;
+  document.getElementById('edit-sup-sys').value = s.sys_name;
+  document.getElementById('edit-sup-type').value = s.sup_type || 'Trade';
+  const sel = document.getElementById('edit-sup-acc');
+  if (sel && ACCOUNT_OPTIONS.length) {
+    sel.innerHTML = ACCOUNT_OPTIONS.map(o => `<option value="${o}" ${o === s.acc_link ? 'selected' : ''}>${o}</option>`).join('');
+  }
+  openModal('modal-edit-supplier');
+}
+async function saveEditSupplier() {
+  const id = document.getElementById('edit-sup-id').value;
+  const data = {
+    bank_name: document.getElementById('edit-sup-bank').value.trim(),
+    sys_name: document.getElementById('edit-sup-sys').value.trim(),
+    acc_link: document.getElementById('edit-sup-acc').value,
+    sup_type: document.getElementById('edit-sup-type').value
+  };
+  await fetch('/api/suppliers/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  _suppliers = []; closeModal('modal-edit-supplier'); renderSuppliers(); showNotif('تم تحديث المورد');
+}
+async function delSupplier(id) {
+  if (!confirm('حذف هذا المورد؟')) return;
+  await fetch('/api/suppliers/' + id, { method: 'DELETE' }); _suppliers = []; renderSuppliers(); showNotif('تم الحذف');
+}
+
+/* ═══════════════════════════════════════
+   CUSTOMERS
+════════════════════════════════════════ */
+async function renderCustomers() {
+  await loadAccountOptions();
+  if (!_customers.length) { const r = await fetch('/api/customers'); _customers = await r.json(); }
+  const q = (document.getElementById('cust-search')?.value || '').toLowerCase();
+  const filtered = _customers.filter(c => c.bank_name.toLowerCase().includes(q) || c.sys_name.toLowerCase().includes(q));
+  const tbody = document.getElementById('cust-table');
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><i class="ti ti-search"></i><p>لا توجد نتائج</p></div></td></tr>'; return; }
+  tbody.innerHTML = filtered.map(c => {
+    const accCode = (c.acc_link || '').split(' - ')[0] || '—';
+    const accName = (c.acc_link || '').split(' - ').slice(1).join(' - ') || '—';
+    return `<tr>
+      <td title="${c.bank_name}">${c.bank_name}</td>
+      <td class="bold">${c.sys_name}</td>
+      <td><span class="tbl-code">${accCode}</span> <span class="tbl-muted">${accName}</span></td>
+      <td><span class="badge ${c.cust_type === 'Trade' ? 'green' : 'amber'}">${c.cust_type || 'Trade'}</span></td>
+      <td>
+        <button class="btn sm ghost icon-only" onclick="openEditCustomer(${c.id})"><i class="ti ti-edit"></i></button>
+        <button class="btn sm danger icon-only" onclick="delCustomer(${c.id})"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+async function addCustomer() {
+  const bank_name = document.getElementById('cust-bank-name').value.trim();
+  const sys_name = document.getElementById('cust-sys-name').value.trim();
+  const acc_link = document.getElementById('cust-acc').value;
+  const cust_type = document.getElementById('cust-type').value;
+  if (!bank_name || !sys_name) { showNotif('اكمل البيانات', 'error'); return; }
+  const r = await fetch('/api/customers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bank_name, sys_name, acc_link, cust_type }) });
+  const d = await r.json();
+  if (d.error) { showNotif(d.error, 'error'); return; }
+  document.getElementById('cust-bank-name').value = ''; document.getElementById('cust-sys-name').value = '';
+  _customers = []; closeModal('modal-add-customer'); renderCustomers();
+  showNotif(`تم إضافة العميل: ${sys_name}`);
+}
+function openEditCustomer(id) {
+  const c = _customers.find(x => x.id === id); if (!c) return;
+  document.getElementById('edit-cust-id').value = id;
+  document.getElementById('edit-cust-bank').value = c.bank_name;
+  document.getElementById('edit-cust-sys').value = c.sys_name;
+  document.getElementById('edit-cust-type').value = c.cust_type || 'Trade';
+  const sel = document.getElementById('edit-cust-acc');
+  if (sel && ACCOUNT_OPTIONS.length) {
+    sel.innerHTML = ACCOUNT_OPTIONS.map(o => `<option value="${o}" ${o === c.acc_link ? 'selected' : ''}>${o}</option>`).join('');
+  }
+  openModal('modal-edit-customer');
+}
+async function saveEditCustomer() {
+  const id = document.getElementById('edit-cust-id').value;
+  const data = {
+    bank_name: document.getElementById('edit-cust-bank').value.trim(),
+    sys_name: document.getElementById('edit-cust-sys').value.trim(),
+    acc_link: document.getElementById('edit-cust-acc').value,
+    cust_type: document.getElementById('edit-cust-type').value
+  };
+  await fetch('/api/customers/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  _customers = []; closeModal('modal-edit-customer'); renderCustomers(); showNotif('تم تحديث العميل');
+}
+async function delCustomer(id) {
+  if (!confirm('حذف هذا العميل؟')) return;
+  await fetch('/api/customers/' + id, { method: 'DELETE' }); _customers = []; renderCustomers(); showNotif('تم الحذف');
+}
+
+/* ═══════════════════════════════════════
+   EXPENSES
+════════════════════════════════════════ */
+async function renderExpenses() {
+  await loadAccountOptions();
+  if (!_expenses.length) { const r = await fetch('/api/expenses'); _expenses = await r.json(); }
+  const q = (document.getElementById('exp-search')?.value || '').toLowerCase();
+  const filtered = _expenses.filter(e => (e.bank_description || '').toLowerCase().includes(q) || (e.expense_category || '').toLowerCase().includes(q));
+  const tbody = document.getElementById('exp-table');
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><i class="ti ti-search"></i><p>لا توجد نتائج</p></div></td></tr>'; return; }
+  tbody.innerHTML = filtered.map(e => {
+    const accCode = (e.acc_link || '').split(' - ')[0] || '—';
+    return `<tr>
+      <td>${e.bank_description || ''}</td>
+      <td class="bold">${e.expense_category || ''}</td>
+      <td><span class="tbl-code">${accCode}</span></td>
+      <td>
+        <button class="btn sm ghost icon-only" onclick="openEditExpense(${e.id})"><i class="ti ti-edit"></i></button>
+        <button class="btn sm danger icon-only" onclick="delExpense(${e.id})"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+async function addExpense() {
+  const bank_description = document.getElementById('exp-bank').value.trim();
+  const expense_category = document.getElementById('exp-cat').value.trim();
+  const acc_link = document.getElementById('exp-acc').value;
+  if (!bank_description) { showNotif('اكمل البيانات', 'error'); return; }
+  const r = await fetch('/api/expenses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bank_description, expense_category, acc_link }) });
+  const d = await r.json();
+  if (d.error) { showNotif(d.error, 'error'); return; }
+  document.getElementById('exp-bank').value = ''; document.getElementById('exp-cat').value = '';
+  _expenses = []; closeModal('modal-add-expense'); renderExpenses();
+  showNotif(`تم إضافة: ${expense_category || bank_description}`);
+}
+function openEditExpense(id) {
+  const e = _expenses.find(x => x.id === id); if (!e) return;
+  document.getElementById('edit-exp-id').value = id;
+  document.getElementById('edit-exp-bank').value = e.bank_description;
+  document.getElementById('edit-exp-cat').value = e.expense_category || '';
+  const sel = document.getElementById('edit-exp-acc');
+  if (sel && ACCOUNT_OPTIONS.length) {
+    sel.innerHTML = ACCOUNT_OPTIONS.map(o => `<option value="${o}" ${o === e.acc_link ? 'selected' : ''}>${o}</option>`).join('');
+  }
+  openModal('modal-edit-expense');
+}
+async function saveEditExpense() {
+  const id = document.getElementById('edit-exp-id').value;
+  const data = {
+    bank_description: document.getElementById('edit-exp-bank').value.trim(),
+    expense_category: document.getElementById('edit-exp-cat').value.trim(),
+    acc_link: document.getElementById('edit-exp-acc').value
+  };
+  await fetch('/api/expenses/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  _expenses = []; closeModal('modal-edit-expense'); renderExpenses(); showNotif('تم التحديث');
+}
+async function delExpense(id) {
+  if (!confirm('حذف هذا البند؟')) return;
+  await fetch('/api/expenses/' + id, { method: 'DELETE' }); _expenses = []; renderExpenses(); showNotif('تم الحذف');
+}
+
+/* ═══════════════════════════════════════
+   LOCATIONS
+════════════════════════════════════════ */
+async function renderLocations() {
+  if (!_locations.length) { const r = await fetch('/api/locations'); _locations = await r.json(); }
+  const tbody = document.getElementById('loc-table');
+  if (!_locations.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><i class="ti ti-map-pin"></i><p>لا توجد مواقع</p></div></td></tr>'; }
+  else {
+    tbody.innerHTML = _locations.map(l => {
+      const isMain = (l.is_main || '').includes('رئيسي');
+      return `<tr>
+        <td class="bold">${l.name}${isMain ? ' <span style="font-size:10px;color:var(--gold)">★ افتراضي</span>' : ''}</td>
+        <td><span class="badge ${isMain ? 'gold' : 'muted'}">${l.is_main || '—'}</span></td>
+        <td>${l.city || 'الرياض'}</td>
+        <td>
+          <button class="btn sm ghost icon-only" onclick="openEditLocation(${l.id})"><i class="ti ti-edit"></i></button>
+          <button class="btn sm danger icon-only" onclick="delLocation(${l.id})"><i class="ti ti-trash"></i></button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  const main = _locations.filter(l => (l.is_main || '').includes('رئيسي')).length;
+  document.getElementById('loc-total').textContent = _locations.length;
+  document.getElementById('loc-main').textContent = main;
+  document.getElementById('loc-sub').textContent = _locations.length - main;
+  document.getElementById('loc-cities').textContent = new Set(_locations.map(l => l.city || 'الرياض')).size;
+}
+async function addLocation() {
+  const name = document.getElementById('loc-name').value.trim();
+  const is_main = document.getElementById('loc-type').value;
+  const city = document.getElementById('loc-city').value.trim() || 'الرياض';
+  if (!name) { showNotif('اكتب اسم الموقع', 'error'); return; }
+  await fetch('/api/locations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, is_main, city }) });
+  document.getElementById('loc-name').value = '';
+  _locations = []; LOCATION_OPTIONS = []; closeModal('modal-add-location'); renderLocations();
+  showNotif(`تم إضافة الموقع: ${name}`);
+}
+function openEditLocation(id) {
+  const l = _locations.find(x => x.id === id); if (!l) return;
+  document.getElementById('edit-loc-id').value = id;
+  document.getElementById('edit-loc-name').value = l.name;
+  document.getElementById('edit-loc-type').value = l.is_main || 'موقع فرعي';
+  document.getElementById('edit-loc-city').value = l.city || 'الرياض';
+  openModal('modal-edit-location');
+}
+async function saveEditLocation() {
+  const id = document.getElementById('edit-loc-id').value;
+  const data = {
+    name: document.getElementById('edit-loc-name').value.trim(),
+    is_main: document.getElementById('edit-loc-type').value,
+    city: document.getElementById('edit-loc-city').value.trim()
+  };
+  await fetch('/api/locations/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  _locations = []; LOCATION_OPTIONS = []; closeModal('modal-edit-location'); renderLocations(); showNotif('تم التحديث');
+}
+async function delLocation(id) {
+  if (!confirm('حذف هذا الموقع؟')) return;
+  await fetch('/api/locations/' + id, { method: 'DELETE' }); _locations = []; LOCATION_OPTIONS = []; renderLocations(); showNotif('تم الحذف');
+}
+
+/* ═══════════════════════════════════════
+   MASTER DATA
+════════════════════════════════════════ */
+async function renderMaster() {
+  if (!_master.length) { const r = await fetch('/api/master'); _master = await r.json(); }
+  const q = (document.getElementById('master-search')?.value || '').toLowerCase();
+  const typeMap = { 'مورد': 'red', 'عميل': 'green', 'مصروف': 'blue' };
+  const filtered = _master.filter(x => !q || x.sys.toLowerCase().includes(q) || x.bank.toLowerCase().includes(q));
+  document.getElementById('ms-supps').textContent = _master.filter(x => x.type === 'مورد').length;
+  document.getElementById('ms-custs').textContent = _master.filter(x => x.type === 'عميل').length;
+  document.getElementById('ms-exps').textContent = _master.filter(x => x.type === 'مصروف').length;
+  document.getElementById('ms-total').textContent = _master.length;
+  const tbody = document.getElementById('master-table');
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><i class="ti ti-search"></i><p>لا توجد نتائج</p></div></td></tr>'; return; }
+  const accCode = acc => (acc || '').split(' - ')[0] || '—';
+  const accName = acc => (acc || '').split(' - ').slice(1).join(' - ') || '—';
+  tbody.innerHTML = filtered.map(x => `<tr>
+    <td><span class="badge ${typeMap[x.type] || 'muted'}">${x.type}</span></td>
+    <td class="bold">${x.sys}</td>
+    <td class="tbl-muted">${x.bank}</td>
+    <td><span class="tbl-code">${accCode(x.acc)}</span></td>
+    <td class="tbl-muted">${accName(x.acc)}</td>
+  </tr>`).join('');
+}
+
+/* ═══════════════════════════════════════
+   IMPORT / EXPORT
+════════════════════════════════════════ */
+function exportData(type) {
+  window.open('/api/' + type + '/export', '_blank');
+  showNotif('جاري تحميل الملف...', 'info');
+}
+async function importData(type, input) {
+  const file = input.files[0]; if (!file) return;
+  const fd = new FormData(); fd.append('file', file);
+  const r = await fetch('/api/' + type + '/import', { method: 'POST', body: fd });
+  const d = await r.json();
+  if (d.error) { showNotif(d.error, 'error'); return; }
+  showNotif(`تم الاستيراد: ${d.added} سجل جديد${d.skipped ? ' (' + d.skipped + ' مكرر)' : ''}`);
+  input.value = '';
+  if (type === 'accounts') { _accounts = []; ACCOUNT_OPTIONS = []; renderAccounts(); }
+  if (type === 'suppliers') { _suppliers = []; renderSuppliers(); }
+  if (type === 'customers') { _customers = []; renderCustomers(); }
+  if (type === 'expenses') { _expenses = []; renderExpenses(); }
+  if (type === 'locations') { _locations = []; LOCATION_OPTIONS = []; renderLocations(); }
+}
+
+/* ═══════════════════════════════════════
+   UPLOAD
+════════════════════════════════════════ */
+async function uploadStatement() {
+  const fileInput = document.getElementById('bank-file');
+  if (!fileInput.files.length) { showNotif('اختر ملف الكشف أولاً', 'error'); return; }
+  const prog = document.getElementById('upload-progress');
+  const fill = document.getElementById('prog-fill');
+  const lbl = document.getElementById('prog-lbl');
+  prog.style.display = 'block'; fill.style.width = '20%'; lbl.textContent = 'جاري رفع الملف...';
+  const fd = new FormData();
   fd.append('file', fileInput.files[0]);
   fd.append('bank', document.getElementById('bank-select').value);
   fd.append('bank_account', document.getElementById('bank-acc').value);
-
-  try{
-    fill.style.width='50%'; lbl.textContent='جاري قراءة الكشف وتطبيق المطابقة...';
-    const r=await fetch('/api/upload',{method:'POST',body:fd});
-    const d=await r.json();
-    if(d.error){showNotif(d.error,'error'); prog.style.display='none'; return;}
-
-    fill.style.width='100%'; lbl.textContent=`اكتملت المعالجة — ${d.count} عملية (${d.detected_bank})`;
-
+  try {
+    fill.style.width = '55%'; lbl.textContent = 'جاري قراءة الكشف وتطبيق المطابقة...';
+    const r = await fetch('/api/upload', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (d.error) { showNotif(d.error, 'error'); prog.style.display = 'none'; return; }
+    fill.style.width = '100%'; lbl.textContent = `اكتملت المعالجة — ${d.count} عملية (${d.detected_bank})`;
     reviewData = d.transactions;
-    document.getElementById('upload-preview').style.display='block';
-    document.getElementById('upload-count').textContent=d.count+' عملية';
-
-    const tbody=document.getElementById('preview-table');
-    tbody.innerHTML=reviewData.slice(0,8).map(t=>{
-      const amt=t.amount>0?`<span style="color:var(--success)">+${fmtNum(t.amount)}</span>`:`<span style="color:var(--danger)">${fmtNum(t.amount)}</span>`;
-      const conf=t.confidence>=90?`<span class="dot dot-g"></span> ${t.confidence}%`:t.confidence>=50?`<span class="dot dot-a"></span> ${t.confidence}%`:`<span class="dot dot-r"></span> —`;
-      const meth={'exact':'🎯 دقيق','fuzzy':'🔍 جزئي','rule':'📏 قاعدة','none':'❓'}[t.method];
-      return `<tr><td>${t.date}</td><td title="${t.bank_desc}">${t.bank_desc.substring(0,30)}</td><td>${amt}</td><td style="font-size:11px">${meth}</td><td>${conf}</td></tr>`;
+    document.getElementById('upload-preview').style.display = 'block';
+    document.getElementById('upload-count').textContent = d.count + ' عملية';
+    const tbody = document.getElementById('preview-table');
+    tbody.innerHTML = reviewData.slice(0, 10).map(t => {
+      const amt = t.amount > 0 ? `<span class="text-green">+${fmt(t.amount)}</span>` : `<span class="text-red">${fmt(t.amount)}</span>`;
+      const conf = t.confidence >= 90 ? `<span class="badge green">${t.confidence}%</span>` : t.confidence >= 50 ? `<span class="badge amber">${t.confidence}%</span>` : `<span class="badge red">يدوي</span>`;
+      return `<tr><td class="tbl-code">${t.date}</td><td title="${t.bank_desc}">${t.bank_desc.substring(0, 35)}</td><td class="mono">${amt}</td><td class="tbl-muted">${t.sys_name || '—'}</td><td>${conf}</td></tr>`;
     }).join('');
-
     showNotif(`تمت معالجة ${d.count} عملية بنجاح`);
-  }catch(e){
-    showNotif('حدث خطأ في رفع الملف','error');
-    prog.style.display='none';
-  }
+  } catch (e) { showNotif('حدث خطأ في رفع الملف', 'error'); prog.style.display = 'none'; }
 }
 
-function groupByDay(data){
-  const groups={};
-  data.forEach(t=>{
-    const d=t.date||'بدون تاريخ';
-    if(!groups[d]) groups[d]=[];
-    groups[d].push(t);
-  });
-  // ترتيب الأيام تنازلياً (الأحدث أولاً)
-  return Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(d=>({date:d, items:groups[d]}));
+/* ═══════════════════════════════════════
+   REVIEW
+════════════════════════════════════════ */
+const FEE_PAT = /(?:CHARGE|FEES?|FEE)\s*SAR\s*([\d.]+).{0,40}?VAT\s*SAR\s*([\d.]+)/is;
+function extractFee(desc) {
+  const m = FEE_PAT.exec(desc || '');
+  return m ? { fee: parseFloat(m[1]) || 0, vat: parseFloat(m[2]) || 0 } : { fee: 0, vat: 0 };
 }
-
-function renderReview(){
-  const filter=document.getElementById('rev-filter')?.value||'all';
-  let data=reviewData;
-  if(filter==='high') data=data.filter(t=>t.confidence>=90);
-  else if(filter==='mid') data=data.filter(t=>t.confidence>=50&&t.confidence<90);
-  else if(filter==='low') data=data.filter(t=>t.confidence<50);
-
-  document.getElementById('rev-total').textContent=reviewData.length;
-  document.getElementById('rev-approved').textContent=reviewData.filter(t=>t.approved).length;
-  document.getElementById('rev-mid').textContent=reviewData.filter(t=>t.confidence>=50&&t.confidence<90).length;
-  document.getElementById('rev-low').textContent=reviewData.filter(t=>t.confidence<50).length;
-
-  const list=document.getElementById('review-list');
-  if(reviewData.length===0){
-    list.innerHTML='<div class="empty">لا توجد عمليات — ابدأ من "رفع كشف البنك"</div>';
-    return;
-  }
-  if(data.length===0){list.innerHTML='<div class="empty">لا توجد نتائج لهذا الفلتر</div>';return;}
-
-  const days=groupByDay(data);
-  list.innerHTML=days.map(day=>{
-    const dayApproved=day.items.filter(t=>t.approved).length;
-    const dayTotal=day.items.length;
-    const allApproved=dayApproved===dayTotal;
-    const isOpen=_openDays.has(day.date);
-    return `
-    <div class="day-group" style="border:0.5px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden">
-      <div class="day-hdr" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#010409;cursor:pointer" onclick="toggleDay('${day.date}')">
-        <i class="ti ti-chevron-${isOpen?'down':'left'}" style="color:var(--gold)"></i>
-        <div style="font-weight:600;font-size:13px">${day.date}</div>
-        <div style="font-size:11px;color:var(--muted)">${dayTotal} عملية</div>
-        <div style="font-size:11px;color:${allApproved?'var(--success)':'var(--warn)'}">${dayApproved}/${dayTotal} معتمدة</div>
-        <div style="margin-right:auto" onclick="event.stopPropagation()">
-          ${allApproved
-            ?`<button class="btn sm" style="color:var(--success);border-color:var(--success)" onclick="unapproveDay('${day.date}')">✓ اليوم معتمد بالكامل</button>`
-            :`<button class="btn sm grn" onclick="approveDay('${day.date}')">اعتماد كل عمليات اليوم</button>`}
-        </div>
-      </div>
-      ${isOpen?`<div class="day-body" style="padding:10px 14px">${day.items.map(t=>renderTxRow(t)).join('')}</div>`:''}
-    </div>`;
-  }).join('');
-}
-
-function renderTxRow(t){
-  const lvl=t.confidence>=90?'high':t.confidence>=50?'mid':'low';
-  const isEditing=_editingTx===t.idx;
-  const meth={'exact':'🎯','fuzzy':'🔍','rule':'📏','none':'❓'}[t.method]||'❓';
-  const confBadge=t.confidence>=90?`<span class="badge bg-g">${t.confidence}%</span>`:t.confidence>=50?`<span class="badge bg-a">${t.confidence}%</span>`:`<span class="badge bg-r">يدوي</span>`;
-
-  if(isEditing){
-    const accOpts=ACCOUNT_OPTIONS.map(a=>`<option value="${a}" ${a===t.acc_link?'selected':''}>${a}</option>`).join('');
-    return `<div class="journal-row ${lvl}" style="display:flex;flex-direction:column;gap:8px;padding:10px;background:#010409;border-radius:8px;margin-bottom:6px">
-      <div style="font-size:11px;color:var(--muted)" title="${t.bank_desc}">${t.bank_desc.substring(0,90)}</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <input type="text" value="${t.sys_name||''}" placeholder="اسم الطرف" oninput="editTxField(${t.idx},'sys_name',this.value)" style="flex:1;min-width:140px">
-        <select onchange="editTxField(${t.idx},'acc_link',this.value)" style="flex:1;min-width:160px">${accOpts}</select>
-        <input type="number" step="0.01" value="${t.amount}" oninput="editTxField(${t.idx},'amount',parseFloat(this.value)||0)" style="width:110px">
-      </div>
-      <div style="display:flex;gap:6px;justify-content:left">
-        <button class="btn sm grn" onclick="saveTxEdit(${t.idx})">حفظ</button>
-        <button class="btn sm" onclick="cancelTxEdit()">إلغاء</button>
-      </div>
-    </div>`;
-  }
-
-  const previewLines = previewJournalLines(t);
-  const memo = previewLines.length ? previewLines[0].memo : t.bank_desc;
-
-  return `<div class="journal-row ${lvl}" style="display:flex;flex-direction:column;gap:6px;padding:8px 0;border-bottom:0.5px solid var(--border)">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <div style="min-width:75px;font-size:11px;color:var(--muted)">${t.date}</div>
-      <div style="flex:1;min-width:160px;font-size:12px;font-weight:600;color:var(--text)">${memo}</div>
-      <div>${confBadge} <span style="font-size:12px">${meth}</span></div>
-      <div style="margin-right:auto;display:flex;gap:6px">
-        <button class="btn sm" onclick="startTxEdit(${t.idx})">تعديل</button>
-        ${t.approved
-          ?`<button class="btn sm" style="color:var(--success);border-color:var(--success)" onclick="toggleApprove(${t.idx})">✓ معتمد</button>`
-          :`<button class="btn sm grn" onclick="toggleApprove(${t.idx})">اعتماد</button>`}
-        <button class="btn sm danger" onclick="deleteTx(${t.idx})">حذف</button>
-      </div>
-    </div>
-    <div style="background:#010409;border-radius:8px;padding:8px 10px;font-size:11px">
-      <table style="width:100%;border-collapse:collapse">
-        <thead><tr style="color:var(--muted)"><th style="text-align:right;padding:2px 6px">الحساب</th><th style="text-align:left;padding:2px 6px;width:100px">مدين</th><th style="text-align:left;padding:2px 6px;width:100px">دائن</th></tr></thead>
-        <tbody>
-          ${previewLines.map(l=>`<tr>
-            <td style="padding:2px 6px">${l.account_name}</td>
-            <td style="padding:2px 6px;color:var(--danger)">${l.debit?fmtNum(l.debit):''}</td>
-            <td style="padding:2px 6px;color:var(--success)">${l.credit?fmtNum(l.credit):''}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-      <div style="margin-top:4px;font-size:10px;color:var(--muted)" title="${t.bank_desc}">${t.bank_desc.substring(0,90)}</div>
-    </div>
-  </div>`;
-}
-
-// نمط استخراج رسم التحويل البنكي وضريبته من نص الحركة (نفس منطق matcher.py)
-const FEE_PATTERN = /(?:CHARGE|FEES?|FEE)\s*SAR\s*([\d.]+).{0,40}?VAT\s*SAR\s*([\d.]+)/is;
-
-function extractBankFee(bankDesc){
-  const m = FEE_PATTERN.exec(bankDesc||'');
-  if(m) return {fee: parseFloat(m[1])||0, vat: parseFloat(m[2])||0};
-  return {fee:0, vat:0};
-}
-
-function buildMemo(entityType, sysName, bankDesc){
-  if(entityType==='supplier' && sysName) return 'دفع الى '+sysName;
-  if(entityType==='customer' && sysName) return 'تحصيل من '+sysName;
+function buildMemo(entityType, sysName, bankDesc) {
+  if (entityType === 'supplier' && sysName) return 'Payment To ' + sysName;
+  if (entityType === 'customer' && sysName) return 'Collection From ' + sysName;
   return bankDesc;
 }
-
-// معاينة سطور القيد الكامل لعملية واحدة في شاشة المراجعة (نفس منطق build_journal_lines في matcher.py)
-function previewJournalLines(t){
+function previewJournalLines(t) {
   const acc = t.acc_link || '111700 - Bank Clearance Account';
   const accName = acc.includes(' - ') ? acc.split(' - ').slice(1).join(' - ') : acc;
   const bankAcc = t.bank_account || '51000 - Bank Alinma';
   const bankName = bankAcc.includes(' - ') ? bankAcc.split(' - ').slice(1).join(' - ') : bankAcc;
   const memo = buildMemo(t.entity_type, t.sys_name, t.bank_desc);
-  const lines=[];
-
-  if(t.amount > 0){
-    lines.push({account_name: bankName, debit: t.amount, credit: 0, memo});
-    lines.push({account_name: accName, debit: 0, credit: t.amount, memo});
+  const lines = [];
+  if (t.amount > 0) {
+    lines.push({ account_name: bankName, debit: t.amount, credit: 0 });
+    lines.push({ account_name: accName, debit: 0, credit: t.amount });
   } else {
-    const {fee, vat} = extractBankFee(t.bank_desc);
+    const { fee, vat } = extractFee(t.bank_desc);
     const bankTotal = Math.abs(t.amount);
-    const vendorNet = Math.round((bankTotal - fee - vat)*100)/100;
-    lines.push({account_name: accName, debit: vendorNet, credit: 0, memo});
-    if(fee>0) lines.push({account_name: 'Bank charges', debit: fee, credit: 0, memo:'BC- '+memo});
-    if(vat>0) lines.push({account_name: 'VAT Payable', debit: vat, credit: 0, memo:'VAT- '+memo});
-    lines.push({account_name: bankName, debit: 0, credit: bankTotal, memo});
+    const vendorNet = Math.round((bankTotal - fee - vat) * 100) / 100;
+    lines.push({ account_name: accName, debit: vendorNet, credit: 0 });
+    if (fee > 0) lines.push({ account_name: 'Bank charges', debit: fee, credit: 0 });
+    if (vat > 0) lines.push({ account_name: 'VAT Payable', debit: vat, credit: 0 });
+    lines.push({ account_name: bankName, debit: 0, credit: bankTotal });
   }
   return lines;
 }
 
-let _openDays=new Set();
-let _editingTx=null;
-
-function toggleDay(date){
-  if(_openDays.has(date)) _openDays.delete(date);
-  else _openDays.add(date);
-  renderReview();
+function groupByDay(data) {
+  const groups = {};
+  data.forEach(t => { const d = t.date || 'بدون تاريخ'; if (!groups[d]) groups[d] = []; groups[d].push(t); });
+  return Object.keys(groups).sort((a, b) => b.localeCompare(a)).map(d => ({ date: d, items: groups[d] }));
 }
 
-function approveDay(date){
-  reviewData.forEach(t=>{if(t.date===date)t.approved=true;});
-  renderReview();
-  showNotif('تم اعتماد كل عمليات يوم '+date);
+function renderReview() {
+  const filter = document.getElementById('rev-filter')?.value || 'all';
+  let data = reviewData;
+  if (filter === 'high') data = data.filter(t => t.confidence >= 90);
+  else if (filter === 'mid') data = data.filter(t => t.confidence >= 50 && t.confidence < 90);
+  else if (filter === 'low') data = data.filter(t => t.confidence < 50);
+  document.getElementById('rev-total').textContent = reviewData.length;
+  document.getElementById('rev-approved').textContent = reviewData.filter(t => t.approved).length;
+  document.getElementById('rev-mid').textContent = reviewData.filter(t => t.confidence >= 50 && t.confidence < 90).length;
+  document.getElementById('rev-low').textContent = reviewData.filter(t => t.confidence < 50).length;
+  const list = document.getElementById('review-list');
+  if (!reviewData.length) { list.innerHTML = '<div class="empty"><i class="ti ti-file-upload"></i><p>ابدأ من "رفع كشف البنك" أولاً</p></div>'; return; }
+  if (!data.length) { list.innerHTML = '<div class="empty"><i class="ti ti-search"></i><p>لا توجد نتائج لهذا الفلتر</p></div>'; return; }
+  const days = groupByDay(data);
+  list.innerHTML = days.map(day => {
+    const approved = day.items.filter(t => t.approved).length;
+    const allOk = approved === day.items.length;
+    const isOpen = _openDays.has(day.date);
+    const dayTotal = day.items.reduce((s, t) => s + Math.abs(t.amount), 0);
+    return `<div class="day-group">
+      <div class="day-hdr" onclick="toggleDay('${day.date}')">
+        <i class="ti ti-chevron-${isOpen ? 'down' : 'left'}" style="color:var(--gold)"></i>
+        <span class="bold">${day.date}</span>
+        <span class="badge muted">${day.items.length} عملية</span>
+        <span class="mono text-sm" style="color:var(--text3)">${fmt(dayTotal)} ر.س</span>
+        <span style="color:${allOk ? 'var(--green)' : 'var(--amber)'}; font-size:11px">${approved}/${day.items.length} معتمدة</span>
+        <div style="margin-right:auto" onclick="event.stopPropagation()">
+          ${allOk
+            ? `<button class="btn sm" style="color:var(--green);border-color:var(--green)" onclick="unapproveDay('${day.date}')"><i class="ti ti-check"></i>معتمد بالكامل</button>`
+            : `<button class="btn sm success" onclick="approveDay('${day.date}')"><i class="ti ti-checks"></i>اعتماد الكل</button>`}
+        </div>
+      </div>
+      ${isOpen ? `<div class="day-body">${day.items.map(t => renderTxRow(t)).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
-function unapproveDay(date){
-  reviewData.forEach(t=>{if(t.date===date)t.approved=false;});
-  renderReview();
-}
-
-function startTxEdit(idx){
-  _editingTx=idx;
-  if(ACCOUNT_OPTIONS.length===0) loadAccountOptions().then(renderReview);
-  else renderReview();
-}
-
-function cancelTxEdit(){
-  _editingTx=null;
-  renderReview();
-}
-
-function editTxField(idx, field, value){
-  const t=reviewData.find(x=>x.idx===idx);
-  if(!t)return;
-  t[field]=value;
-  if(field==='acc_link'){
-    // عند تغيير الحساب يدوياً نعتبرها مطابقة يدوية موثوقة 100%
-    t.method='manual';
-    t.confidence=100;
-  }
-}
-
-function saveTxEdit(idx){
-  _editingTx=null;
-  renderReview();
-  showNotif('تم تحديث العملية');
-}
-
-function deleteTx(idx){
-  if(!confirm('حذف هذه العملية من القائمة؟ (لن تُدرج في القيود)'))return;
-  reviewData=reviewData.filter(t=>t.idx!==idx);
-  renderReview();
-}
-
-function toggleApprove(idx){
-  const t=reviewData.find(x=>x.idx===idx);
-  if(t)t.approved=!t.approved;
-  renderReview();
-}
-
-function approveAll(){
-  reviewData.forEach(t=>{if(t.confidence>=85)t.approved=true;});
-  renderReview();
-  showNotif('تم اعتماد كل العمليات الموثوقة (≥85%)');
-}
-
-async function generateAndGoExport(){
-  const approved=reviewData.filter(t=>t.approved);
-  if(approved.length===0){showNotif('اعتمد عمليات أولاً','error');return;}
-
-  const r=await fetch('/api/generate-journal',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({transactions:reviewData})});
-  const d=await r.json();
-  if(d.error){showNotif(d.error,'error');return;}
-
-  exportLines=d.lines;
-  const stats=d.stats;
-  document.getElementById('exp-lines').textContent=stats.lines;
-  document.getElementById('exp-debit').textContent=fmtNum(stats.total_debit);
-  document.getElementById('exp-credit').textContent=fmtNum(stats.total_credit);
-  document.getElementById('exp-balance').textContent=stats.balanced?'✅ متوازن':`❌ فرق ${fmtNum(stats.diff)}`;
-
-  const preview=document.getElementById('export-preview');
-  let html='<div style="color:var(--info);margin-bottom:6px">JournalNo,JournalDate,AccountName,Debits,Credits,Description,Name,Location,TaxAmount,TaxName</div>';
-  exportLines.slice(0,30).forEach(l=>{
-    html+=`<div>${l.journal_no},${l.journal_date},${l.account_name},${l.debit||''},${l.credit||''},${(l.memo||'').substring(0,20)},${l.entity_name||''},${l.location||''},${l.tax_amount||''}</div>`;
-  });
-  if(exportLines.length>30) html+=`<div style="color:var(--muted)">... ${exportLines.length-30} سطر إضافي</div>`;
-  preview.innerHTML=html;
-
-  nav('export', document.querySelectorAll('.sb-item')[9]);
-}
-
-async function exportCSV(){
-  if(exportLines.length===0){showNotif('لا توجد قيود — انتقل من شاشة المراجعة أولاً','error');return;}
-  const r=await fetch('/api/export/csv',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({lines:exportLines})});
-  const blob=await r.blob();
-  downloadBlob(blob, 'QB_Journal.csv');
-  showNotif('تم تحميل ملف CSV بنجاح');
-}
-
-async function exportExcel(){
-  if(exportLines.length===0){showNotif('لا توجد قيود — انتقل من شاشة المراجعة أولاً','error');return;}
-  const r=await fetch('/api/export/excel',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({lines:exportLines})});
-  const blob=await r.blob();
-  downloadBlob(blob, 'Journal.xlsx');
-  showNotif('تم تحميل ملف Excel بنجاح');
-}
-
-async function saveToDb(){
-  if(exportLines.length===0){showNotif('لا توجد قيود للحفظ','error');return;}
-  const r=await fetch('/api/save-journal',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({lines:exportLines})});
-  const d=await r.json();
-  showNotif(`تم حفظ ${d.saved} سطر في قاعدة البيانات`);
-  reviewData=[]; exportLines=[];
-  document.getElementById('upload-preview').style.display='none';
-  document.getElementById('upload-progress').style.display='none';
-  document.getElementById('bank-file').value='';
-}
-
-function downloadBlob(blob, filename){
-  const url=window.URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download=filename;
-  document.body.appendChild(a); a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
-}
-
-let _journals=[];
-let _jrnSelected=new Set();
-let _jrnEditingLine=null;
-
-function groupJournalsByNo(data){
-  const groups={};
-  data.forEach(j=>{
-    if(!groups[j.journal_no]) groups[j.journal_no]=[];
-    groups[j.journal_no].push(j);
-  });
-  return Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(jno=>({jno, lines:groups[jno]}));
-}
-
-async function renderJournals(){
-  const dFrom=document.getElementById('jrn-date-from')?.value||'';
-  const dTo=document.getElementById('jrn-date-to')?.value||'';
-  const qs=new URLSearchParams();
-  if(dFrom) qs.set('date_from', dFrom);
-  if(dTo) qs.set('date_to', dTo);
-
-  const r=await fetch('/api/journals'+(qs.toString()?'?'+qs.toString():''));
-  _journals=await r.json();
-  _jrnSelected.clear();
-  updateJrnBulkBtn();
-
-  if(ACCOUNT_OPTIONS.length===0 || LOCATION_OPTIONS.length===0) await loadAccountOptions();
-
-  const q=(document.getElementById('jrn-search')?.value||'').toLowerCase();
-  const list=document.getElementById('jrn-list');
-  const filtered=_journals.filter(j=>
-    !q || (j.account_name||'').toLowerCase().includes(q) ||
-    (j.entity_name||'').toLowerCase().includes(q) ||
-    (j.memo||'').toLowerCase().includes(q) ||
-    (j.journal_no||'').toLowerCase().includes(q));
-
-  if(filtered.length===0){list.innerHTML='<div class="empty">لا توجد قيود محفوظة</div>';return;}
-
-  const journals=groupJournalsByNo(filtered);
-  list.innerHTML=journals.map(je=>renderJournalCard(je)).join('');
-}
-
-function renderJournalCard(je){
-  const first=je.lines[0];
-  const totalDebit=je.lines.reduce((s,l)=>s+(l.debit||0),0);
-  const totalCredit=je.lines.reduce((s,l)=>s+(l.credit||0),0);
-  const balanced=Math.abs(totalDebit-totalCredit)<0.01;
-  const isSelected=_jrnSelected.has(je.jno);
-
-  return `<div class="day-group" style="border:0.5px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden">
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#010409;flex-wrap:wrap">
-      <input type="checkbox" class="jrn-row-chk" data-jno="${je.jno}" ${isSelected?'checked':''} onchange="toggleJrnSelect('${je.jno}',this.checked)">
-      <div style="font-family:monospace;font-size:11px;color:var(--gold)">${je.jno}</div>
-      <div style="font-size:11px;color:var(--muted)">${first.journal_date}</div>
-      <div style="font-size:12px;font-weight:600;flex:1;min-width:160px">${first.memo||''}</div>
-      <div style="font-size:11px;color:${first.status==='معتمد'?'var(--success)':'var(--warn)'}">${first.status||'معتمد'}</div>
-      <div style="font-size:10px;color:${balanced?'var(--success)':'var(--danger)'}">${balanced?'✅ متوازن':'❌ غير متوازن'}</div>
-      <div style="display:flex;gap:6px">
-        <button class="btn sm" onclick="downloadSingleJournal('${je.jno}')">تصدير CSV</button>
-        ${first.status==='معتمد'
-          ?`<button class="btn sm" onclick="setJournalStatus('${je.jno}','مسودة')">تحويل لمسودة</button>`
-          :`<button class="btn sm grn" onclick="setJournalStatus('${je.jno}','معتمد')">اعتماد</button>`}
-        <button class="btn sm danger" onclick="delJournal('${je.jno}')">حذف القيد</button>
+function renderTxRow(t) {
+  const lvl = t.confidence >= 90 ? 'high' : t.confidence >= 50 ? 'mid' : 'low';
+  const methIcon = { exact: 'ti-target', fuzzy: 'ti-binoculars', rule: 'ti-ruler', none: 'ti-question-mark', manual: 'ti-hand' }[t.method] || 'ti-question-mark';
+  const confBadge = t.confidence >= 90 ? `<span class="badge green">${t.confidence}%</span>` : t.confidence >= 50 ? `<span class="badge amber">${t.confidence}%</span>` : `<span class="badge red">يدوي</span>`;
+  const memo = buildMemo(t.entity_type, t.sys_name, t.bank_desc);
+  const lines = previewJournalLines(t);
+  return `<div class="rev-item ${lvl}">
+    <div class="rev-hdr">
+      <span class="tbl-code">${t.date}</span>
+      <span class="bold" style="flex:1;min-width:160px">${memo}</span>
+      <i class="ti ${methIcon} text-muted" style="font-size:14px"></i>
+      ${confBadge}
+      <span class="mono ${t.amount > 0 ? 'text-green' : 'text-red'}" style="min-width:100px;text-align:left">${t.amount > 0 ? '+' : ''}${fmt(t.amount)}</span>
+      <div style="margin-right:auto;display:flex;gap:6px">
+        <button class="btn sm ghost icon-only" onclick="openTxEdit(${t.idx})"><i class="ti ti-edit"></i></button>
+        ${t.approved
+          ? `<button class="btn sm" style="color:var(--green);border-color:var(--green)" onclick="toggleApprove(${t.idx})"><i class="ti ti-check"></i>معتمد</button>`
+          : `<button class="btn sm success" onclick="toggleApprove(${t.idx})"><i class="ti ti-check"></i>اعتماد</button>`}
+        <button class="btn sm danger icon-only" onclick="deleteTx(${t.idx})"><i class="ti ti-x"></i></button>
       </div>
     </div>
-    <div style="padding:8px 14px;background:#010409">
+    <div class="rev-body">
+      <table class="rev-subtable" style="width:100%;border-collapse:collapse">
+        <thead><tr><th style="text-align:right;color:var(--text3)">الحساب</th><th style="text-align:left;color:var(--text3);width:110px">مدين</th><th style="text-align:left;color:var(--text3);width:110px">دائن</th></tr></thead>
+        <tbody>
+          ${lines.map(l => `<tr>
+            <td>${l.account_name}</td>
+            <td class="text-red mono">${l.debit ? fmt(l.debit) : ''}</td>
+            <td class="text-green mono">${l.credit ? fmt(l.credit) : ''}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="text-xs text-muted mt4" title="${t.bank_desc}">${t.bank_desc.substring(0, 100)}</div>
+    </div>
+  </div>`;
+}
+
+function toggleDay(date) { if (_openDays.has(date)) _openDays.delete(date); else _openDays.add(date); renderReview(); }
+function approveDay(date) { reviewData.forEach(t => { if (t.date === date) t.approved = true; }); renderReview(); showNotif('تم اعتماد يوم ' + date); }
+function unapproveDay(date) { reviewData.forEach(t => { if (t.date === date) t.approved = false; }); renderReview(); }
+function toggleApprove(idx) { const t = reviewData.find(x => x.idx === idx); if (t) t.approved = !t.approved; renderReview(); }
+function deleteTx(idx) { if (!confirm('حذف العملية؟')) return; reviewData = reviewData.filter(t => t.idx !== idx); renderReview(); }
+function approveAll() { reviewData.forEach(t => { if (t.confidence >= 85) t.approved = true; }); renderReview(); showNotif('تم اعتماد كل العمليات الموثوقة'); }
+
+function openTxEdit(idx) {
+  const t = reviewData.find(x => x.idx === idx); if (!t) return;
+  document.getElementById('edit-tx-idx').value = idx;
+  document.getElementById('edit-tx-name').value = t.sys_name || '';
+  document.getElementById('edit-tx-amount').value = t.amount;
+  const sel = document.getElementById('edit-tx-acc');
+  if (ACCOUNT_OPTIONS.length) {
+    sel.innerHTML = ACCOUNT_OPTIONS.map(o => `<option value="${o}" ${o === t.acc_link ? 'selected' : ''}>${o}</option>`).join('');
+  }
+  openModal('modal-edit-tx');
+}
+function saveTxEdit() {
+  const idx = parseInt(document.getElementById('edit-tx-idx').value);
+  const t = reviewData.find(x => x.idx === idx); if (!t) return;
+  t.sys_name = document.getElementById('edit-tx-name').value;
+  t.acc_link = document.getElementById('edit-tx-acc').value;
+  t.amount = parseFloat(document.getElementById('edit-tx-amount').value) || t.amount;
+  t.method = 'manual'; t.confidence = 100;
+  closeModal('modal-edit-tx'); renderReview(); showNotif('تم تحديث العملية');
+}
+
+/* ═══════════════════════════════════════
+   GENERATE + EXPORT
+════════════════════════════════════════ */
+async function generateAndGoExport() {
+  const approved = reviewData.filter(t => t.approved);
+  if (!approved.length) { showNotif('اعتمد عمليات أولاً', 'error'); return; }
+  const r = await fetch('/api/generate-journal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transactions: reviewData }) });
+  const d = await r.json();
+  if (d.error) { showNotif(d.error, 'error'); return; }
+  exportLines = d.lines;
+  const s = d.stats;
+  document.getElementById('exp-lines').textContent = s.lines;
+  document.getElementById('exp-debit').textContent = fmt(s.total_debit);
+  document.getElementById('exp-credit').textContent = fmt(s.total_credit);
+  document.getElementById('exp-balance').textContent = s.balanced ? '✓ متوازن' : `✗ فرق ${fmt(s.diff)}`;
+  document.getElementById('exp-balance').style.color = s.balanced ? 'var(--green)' : 'var(--red)';
+  const prev = document.getElementById('export-preview');
+  let html = `<div style="color:var(--blue);margin-bottom:8px;opacity:.7">JournalNo,JournalDate,AccountName,Debits,Credits,Description,Name,Location,TaxAmount,TaxName</div>`;
+  exportLines.slice(0, 40).forEach(l => {
+    html += `<div>${l.journal_no||''},${l.journal_date||''},${l.account_code||''},${l.debit||''},${l.credit||''},${(l.memo||'').substring(0,25)},${l.entity_name||''},${l.location||''},${l.tax_amount||''}</div>`;
+  });
+  if (exportLines.length > 40) html += `<div style="color:var(--text3)">... ${exportLines.length - 40} سطر إضافي</div>`;
+  prev.innerHTML = html;
+  nav('export');
+}
+async function exportCSV() {
+  if (!exportLines.length) { showNotif('لا توجد قيود — انتقل من شاشة المراجعة أولاً', 'error'); return; }
+  const r = await fetch('/api/export/csv', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lines: exportLines }) });
+  dlBlob(await r.blob(), 'QB_Journal.csv'); showNotif('تم تحميل CSV بنجاح');
+}
+async function exportExcel() {
+  if (!exportLines.length) { showNotif('لا توجد قيود', 'error'); return; }
+  const r = await fetch('/api/export/excel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lines: exportLines }) });
+  dlBlob(await r.blob(), 'Journal.xlsx'); showNotif('تم تحميل Excel بنجاح');
+}
+async function saveToDb() {
+  if (!exportLines.length) { showNotif('لا توجد قيود للحفظ', 'error'); return; }
+  const r = await fetch('/api/save-journal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lines: exportLines }) });
+  const d = await r.json();
+  showNotif(`تم حفظ ${d.saved} سطر في قاعدة البيانات`);
+  reviewData = []; exportLines = [];
+  document.getElementById('upload-preview').style.display = 'none';
+  document.getElementById('upload-progress').style.display = 'none';
+  document.getElementById('bank-file').value = '';
+}
+
+/* ═══════════════════════════════════════
+   JOURNALS
+════════════════════════════════════════ */
+function groupJournalsByNo(data) {
+  const g = {};
+  data.forEach(j => { if (!g[j.journal_no]) g[j.journal_no] = []; g[j.journal_no].push(j); });
+  return Object.keys(g).sort((a, b) => b.localeCompare(a)).map(jno => ({ jno, lines: g[jno] }));
+}
+
+async function renderJournals() {
+  const dFrom = document.getElementById('jrn-date-from')?.value || '';
+  const dTo = document.getElementById('jrn-date-to')?.value || '';
+  const qs = new URLSearchParams();
+  if (dFrom) qs.set('date_from', dFrom); if (dTo) qs.set('date_to', dTo);
+  const r = await fetch('/api/journals' + (qs.toString() ? '?' + qs.toString() : ''));
+  _journals = await r.json(); _jrnSelected.clear(); updateJrnBulkBtn();
+  if (!ACCOUNT_OPTIONS.length || !LOCATION_OPTIONS.length) await loadAccountOptions();
+  const q = (document.getElementById('jrn-search')?.value || '').toLowerCase();
+  const filtered = _journals.filter(j => !q ||
+    (j.account_name || '').toLowerCase().includes(q) ||
+    (j.entity_name || '').toLowerCase().includes(q) ||
+    (j.memo || '').toLowerCase().includes(q) ||
+    (j.journal_no || '').toLowerCase().includes(q));
+  const list = document.getElementById('jrn-list');
+  if (!filtered.length) { list.innerHTML = '<div class="empty"><i class="ti ti-inbox"></i><p>لا توجد قيود محفوظة</p></div>'; return; }
+  list.innerHTML = groupJournalsByNo(filtered).map(je => renderJournalCard(je)).join('');
+}
+
+function renderJournalCard(je) {
+  const first = je.lines[0];
+  const totalD = je.lines.reduce((s, l) => s + (l.debit || 0), 0);
+  const totalC = je.lines.reduce((s, l) => s + (l.credit || 0), 0);
+  const balanced = Math.abs(totalD - totalC) < 0.01;
+  const isSel = _jrnSelected.has(je.jno);
+  return `<div class="j-card">
+    <div class="j-card-hdr">
+      <input type="checkbox" class="jrn-row-chk" data-jno="${je.jno}" ${isSel ? 'checked' : ''} onchange="toggleJrnSelect('${je.jno}',this.checked)">
+      <span class="tbl-code">${je.jno}</span>
+      <span class="tbl-muted">${first.journal_date}</span>
+      <span class="bold" style="flex:1;min-width:160px">${first.memo || ''}</span>
+      <span class="badge ${first.status === 'معتمد' ? 'green' : 'amber'}">${first.status || 'معتمد'}</span>
+      <span class="badge ${balanced ? 'green' : 'red'}">${balanced ? '✓ متوازن' : '✗ غير متوازن'}</span>
+      <div style="display:flex;gap:6px;margin-right:auto">
+        <button class="btn sm ghost" onclick="dlSingleJournal('${je.jno}')"><i class="ti ti-download"></i>CSV</button>
+        ${first.status === 'معتمد'
+          ? `<button class="btn sm ghost" onclick="setJournalStatus('${je.jno}','مسودة')"><i class="ti ti-edit"></i>مسودة</button>`
+          : `<button class="btn sm success" onclick="setJournalStatus('${je.jno}','معتمد')"><i class="ti ti-check"></i>اعتماد</button>`}
+        <button class="btn sm danger icon-only" onclick="delJournal('${je.jno}')"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>
+    <div class="j-card-body">
       <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="color:var(--muted)">
-          <th style="text-align:right;padding:2px 6px">الحساب</th>
-          <th style="text-align:right;padding:2px 6px">الطرف</th>
-          <th style="text-align:right;padding:2px 6px">الموقع</th>
-          <th style="text-align:left;padding:2px 6px;width:90px">مدين</th>
-          <th style="text-align:left;padding:2px 6px;width:90px">دائن</th>
-          <th style="width:60px"></th>
+        <thead><tr style="color:var(--text3)">
+          <th style="text-align:right;padding:3px 8px">الحساب</th>
+          <th style="text-align:right;padding:3px 8px">الطرف</th>
+          <th style="text-align:right;padding:3px 8px">الموقع</th>
+          <th style="text-align:left;padding:3px 8px;width:100px">مدين</th>
+          <th style="text-align:left;padding:3px 8px;width:100px">دائن</th>
+          <th style="width:70px;padding:3px 8px"></th>
         </tr></thead>
-        <tbody>${je.lines.map(l=>renderJournalLineRow(l)).join('')}</tbody>
+        <tbody>${je.lines.map(l => renderJournalLineRow(l)).join('')}</tbody>
       </table>
     </div>
   </div>`;
 }
 
-function renderJournalLineRow(l){
-  const isEditing=_jrnEditingLine===l.id;
-  if(isEditing){
-    const accOpts=ACCOUNT_OPTIONS.map(a=>{
-      const code=a.split(' - ')[0];
-      return `<option value="${a}" ${code===l.account_code?'selected':''}>${a}</option>`;
-    }).join('');
-    const locOpts=LOCATION_OPTIONS.map(loc=>`<option value="${loc}" ${loc===l.location?'selected':''}>${loc}</option>`).join('');
-    return `<tr style="background:#161b22">
-      <td style="padding:3px"><select id="jln-acc-${l.id}" style="width:100%">${accOpts}</select></td>
-      <td style="padding:3px"><input id="jln-ent-${l.id}" type="text" value="${l.entity_name||''}" style="width:100%"></td>
-      <td style="padding:3px"><select id="jln-loc-${l.id}" style="width:100%">${locOpts}</select></td>
-      <td style="padding:3px"><input id="jln-deb-${l.id}" type="number" step="0.01" value="${l.debit||0}" style="width:100%"></td>
-      <td style="padding:3px"><input id="jln-cre-${l.id}" type="number" step="0.01" value="${l.credit||0}" style="width:100%"></td>
+function renderJournalLineRow(l) {
+  if (_jrnEditingLine === l.id) {
+    const ao = ACCOUNT_OPTIONS.map(a => `<option value="${a}" ${a.split(' - ')[0] === l.account_code ? 'selected' : ''}>${a}</option>`).join('');
+    const lo = LOCATION_OPTIONS.map(loc => `<option value="${loc}" ${loc === l.location ? 'selected' : ''}>${loc}</option>`).join('');
+    return `<tr style="background:var(--card2)">
+      <td style="padding:3px"><select id="jln-acc-${l.id}" style="width:100%">${ao}</select></td>
+      <td style="padding:3px"><input id="jln-ent-${l.id}" type="text" value="${l.entity_name || ''}" style="width:100%"></td>
+      <td style="padding:3px"><select id="jln-loc-${l.id}" style="width:100%">${lo}</select></td>
+      <td style="padding:3px"><input id="jln-deb-${l.id}" type="number" step="0.01" value="${l.debit || 0}" style="width:100%"></td>
+      <td style="padding:3px"><input id="jln-cre-${l.id}" type="number" step="0.01" value="${l.credit || 0}" style="width:100%"></td>
       <td style="padding:3px;display:flex;gap:4px">
-        <button class="btn sm grn" onclick="saveJournalLine(${l.id})">حفظ</button>
-        <button class="btn sm" onclick="cancelJournalLineEdit()">إلغاء</button>
+        <button class="btn sm success" onclick="saveJournalLine(${l.id})"><i class="ti ti-check"></i></button>
+        <button class="btn sm ghost" onclick="_jrnEditingLine=null;renderJournals()"><i class="ti ti-x"></i></button>
       </td>
     </tr>`;
   }
   return `<tr>
-    <td style="padding:3px 6px">${l.account_code} - ${l.account_name}</td>
-    <td style="padding:3px 6px">${l.entity_name||''}</td>
-    <td style="padding:3px 6px">${l.location||''}</td>
-    <td style="padding:3px 6px;color:var(--danger)">${l.debit?fmtNum(l.debit):''}</td>
-    <td style="padding:3px 6px;color:var(--success)">${l.credit?fmtNum(l.credit):''}</td>
-    <td style="padding:3px 6px"><button class="btn sm" onclick="startJournalLineEdit(${l.id})">تعديل</button></td>
+    <td style="padding:3px 8px"><span class="tbl-code">${l.account_code}</span> ${l.account_name}</td>
+    <td style="padding:3px 8px">${l.entity_name || ''}</td>
+    <td style="padding:3px 8px">${l.location || ''}</td>
+    <td style="padding:3px 8px" class="text-red mono">${l.debit ? fmt(l.debit) : ''}</td>
+    <td style="padding:3px 8px" class="text-green mono">${l.credit ? fmt(l.credit) : ''}</td>
+    <td style="padding:3px 8px"><button class="btn sm ghost icon-only" onclick="_jrnEditingLine=${l.id};renderJournals()"><i class="ti ti-edit"></i></button></td>
   </tr>`;
 }
 
-function startJournalLineEdit(lineId){
-  _jrnEditingLine=lineId;
-  renderJournals();
-}
-
-function cancelJournalLineEdit(){
-  _jrnEditingLine=null;
-  renderJournals();
-}
-
-async function saveJournalLine(lineId){
-  const accVal=document.getElementById(`jln-acc-${lineId}`).value;
-  const accCode=accVal.split(' - ')[0];
-  const accName=accVal.includes(' - ')?accVal.split(' - ').slice(1).join(' - '):accVal;
-  const payload={
-    account_code: accCode,
-    account_name: accName,
-    entity_name: document.getElementById(`jln-ent-${lineId}`).value,
-    location: document.getElementById(`jln-loc-${lineId}`).value,
-    debit: parseFloat(document.getElementById(`jln-deb-${lineId}`).value)||0,
-    credit: parseFloat(document.getElementById(`jln-cre-${lineId}`).value)||0,
-  };
-  await fetch(`/api/journals/line/${lineId}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-  _jrnEditingLine=null;
-  renderJournals();
-  showNotif('تم تحديث السطر');
-}
-
-async function setJournalStatus(jno, status){
-  await fetch(`/api/journals/${jno}/status`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
-  renderJournals();
-  showNotif(status==='معتمد'?'تم اعتماد القيد':'تم تحويل القيد لمسودة');
-}
-
-async function downloadSingleJournal(jno){
-  const r=await fetch(`/api/export/journal/${jno}`);
-  if(!r.ok){showNotif('فشل تصدير القيد','error');return;}
-  const blob=await r.blob();
-  downloadBlob(blob, `QB_Journal_${jno}.csv`);
-  showNotif('تم تصدير القيد '+jno);
-}
-
-function clearJrnDateFilter(){
-  document.getElementById('jrn-date-from').value='';
-  document.getElementById('jrn-date-to').value='';
-  renderJournals();
-}
-
-function toggleSelectAllJournals(checkbox){
-  document.querySelectorAll('.jrn-row-chk').forEach(c=>{
-    c.checked=checkbox.checked;
-    toggleJrnSelect(c.dataset.jno, checkbox.checked);
+async function saveJournalLine(id) {
+  const accVal = document.getElementById(`jln-acc-${id}`).value;
+  const accCode = accVal.split(' - ')[0];
+  const accName = accVal.includes(' - ') ? accVal.split(' - ').slice(1).join(' - ') : accVal;
+  await fetch(`/api/journals/line/${id}`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      account_code: accCode, account_name: accName,
+      entity_name: document.getElementById(`jln-ent-${id}`).value,
+      location: document.getElementById(`jln-loc-${id}`).value,
+      debit: parseFloat(document.getElementById(`jln-deb-${id}`).value) || 0,
+      credit: parseFloat(document.getElementById(`jln-cre-${id}`).value) || 0,
+    })
   });
+  _jrnEditingLine = null; renderJournals(); showNotif('تم تحديث السطر');
 }
-
-function toggleJrnSelect(jno, checked){
-  if(checked) _jrnSelected.add(jno);
-  else _jrnSelected.delete(jno);
-  updateJrnBulkBtn();
+async function setJournalStatus(jno, status) {
+  await fetch(`/api/journals/${jno}/status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+  renderJournals(); showNotif(status === 'معتمد' ? 'تم الاعتماد' : 'تحويل لمسودة');
 }
-
-function updateJrnBulkBtn(){
-  const btn=document.getElementById('jrn-bulk-delete-btn');
-  const cnt=document.getElementById('jrn-selected-count');
-  cnt.textContent=_jrnSelected.size;
-  btn.disabled=_jrnSelected.size===0;
+async function dlSingleJournal(jno) {
+  const r = await fetch(`/api/export/journal/${jno}`);
+  if (!r.ok) { showNotif('فشل التصدير', 'error'); return; }
+  dlBlob(await r.blob(), `QB_Journal_${jno}.csv`); showNotif('تم تصدير القيد ' + jno);
 }
-
-async function bulkDeleteJournals(){
-  if(_jrnSelected.size===0)return;
-  if(!confirm(`حذف ${_jrnSelected.size} قيد محدد؟ هذا الإجراء لا يمكن التراجع عنه.`))return;
-  await fetch('/api/journals/bulk-delete',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({journal_nos:Array.from(_jrnSelected)})});
-  showNotif(`تم حذف ${_jrnSelected.size} قيد`);
+function clearJrnFilter() {
+  document.getElementById('jrn-date-from').value = ''; document.getElementById('jrn-date-to').value = '';
   renderJournals();
 }
-
-async function delJournal(jno){
-  await fetch('/api/journals/'+jno,{method:'DELETE'});
-  renderJournals();
-  showNotif('تم حذف القيد '+jno);
+function toggleSelectAllJournals(cb) {
+  document.querySelectorAll('.jrn-row-chk').forEach(c => { c.checked = cb.checked; toggleJrnSelect(c.dataset.jno, cb.checked); });
+}
+function toggleJrnSelect(jno, checked) { if (checked) _jrnSelected.add(jno); else _jrnSelected.delete(jno); updateJrnBulkBtn(); }
+function updateJrnBulkBtn() {
+  document.getElementById('jrn-bulk-delete-btn').disabled = _jrnSelected.size === 0;
+  document.getElementById('jrn-selected-count').textContent = _jrnSelected.size;
+}
+async function bulkDeleteJournals() {
+  if (!_jrnSelected.size) return;
+  if (!confirm(`حذف ${_jrnSelected.size} قيد؟`)) return;
+  await fetch('/api/journals/bulk-delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ journal_nos: Array.from(_jrnSelected) }) });
+  showNotif(`تم حذف ${_jrnSelected.size} قيد`); renderJournals();
+}
+async function delJournal(jno) {
+  if (!confirm('حذف القيد ' + jno + '؟')) return;
+  await fetch('/api/journals/' + jno, { method: 'DELETE' }); renderJournals(); showNotif('تم حذف القيد');
 }
 
+// ── INIT ──
 loadDashboard();
+loadAccountOptions();
 </script>
 </body>
 </html>
