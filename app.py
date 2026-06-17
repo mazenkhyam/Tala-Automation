@@ -412,6 +412,14 @@ def api_upload():
     if df_raw.empty:
         return jsonify({'error': 'لم يُعثر على بيانات في الملف'}), 400
 
+    # الموقع الافتراضي = الموقع الرئيسي المسجّل في صفحة "المواقع" (إن وُجد)
+    conn = get_conn()
+    default_loc_row = conn.execute(
+        "SELECT name FROM locations ORDER BY is_main DESC, id ASC LIMIT 1"
+    ).fetchone()
+    default_location = default_loc_row['name'] if default_loc_row else ''
+    conn.close()
+
     master = load_master()
     enriched = []
     for i, tx in df_raw.iterrows():
@@ -426,7 +434,7 @@ def api_upload():
             'entity_type': match['entity_type'],
             'method': match['method'],
             'confidence': match['confidence'],
-            'location': '',
+            'location': default_location,
             'memo': tx['bank_desc'],
             'approved': match['confidence'] >= 90,
             'bank_account': bank_account,
@@ -452,8 +460,13 @@ def api_generate_journal():
         return jsonify({'error': 'لا توجد عمليات معتمدة'}), 400
 
     all_lines = []
-    for seq, t in enumerate(approved, start=1):
-        jno = f"JE-{datetime.date.today().strftime('%Y%m')}-{seq:04d}"
+    day_counters = {}
+    for t in approved:
+        tx_date = t['date']
+        day_counters[tx_date] = day_counters.get(tx_date, 0) + 1
+        # رقم القيد = تاريخ يومية البنك + رقم تسلسلي ضمن نفس اليوم
+        # (لمنع تصادم القيود عند وجود أكثر من عملية في يوم واحد)
+        jno = f"{tx_date}-{day_counters[tx_date]:02d}"
         lines = build_journal_lines(
             tx={
                 'date': t['date'],
@@ -501,6 +514,27 @@ def api_export_csv():
         mimetype='text/csv',
         as_attachment=True,
         download_name=f"QB_Journal_{datetime.date.today()}.csv",
+    )
+
+
+@app.route('/api/export/journal/<journal_no>', methods=['GET'])
+def api_export_single_journal(journal_no):
+    """تصدير قيد واحد فقط (محفوظ في السجل) بصيغة QuickBooks CSV"""
+    conn = get_conn()
+    df = pd.read_sql_query("""
+        SELECT journal_no, journal_date, account_code, debit, credit,
+               memo, entity_name, location, tax_amount
+        FROM journals WHERE journal_no=? ORDER BY line_no ASC
+    """, conn, params=[journal_no])
+    conn.close()
+    if df.empty:
+        return jsonify({'error': 'القيد غير موجود'}), 404
+    csv_bytes = journals_to_qb_csv(df)
+    return send_file(
+        BytesIO(csv_bytes),
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=f"QB_Journal_{journal_no}.csv",
     )
 
 
