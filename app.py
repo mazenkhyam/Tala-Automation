@@ -11,7 +11,7 @@ from io import BytesIO
 
 from flask import Flask, render_template, request, jsonify, send_file
 
-from parser import parse_statement
+from statement_parser import parse_statement
 from matcher import match_entity, build_journal_lines, BANK_ACCOUNTS
 from exporter import journals_to_qb_csv, journals_to_excel, summary_stats
 import pandas as pd
