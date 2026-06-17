@@ -494,7 +494,7 @@ label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px}
 <div class="sc" id="sc-journals">
   <div class="card">
     <div class="card-hdr">
-      <div class="card-title">سجل القيود المحفوظة</div>
+      <div class="card-title">سجل القيود المحفوظة — معتمدة بعد التوليد</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         <label style="font-size:11px;color:var(--muted)">من
           <input type="date" id="jrn-date-from" onchange="renderJournals()" style="width:130px;margin-right:4px">
@@ -504,17 +504,13 @@ label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px}
         </label>
         <button class="btn sm" onclick="clearJrnDateFilter()">إلغاء الفلتر</button>
         <input type="text" id="jrn-search" placeholder="بحث..." style="width:160px" oninput="renderJournals()">
+        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px">
+          <input type="checkbox" id="jrn-select-all" onchange="toggleSelectAllJournals(this)"> تحديد الكل
+        </label>
         <button class="btn sm danger" id="jrn-bulk-delete-btn" onclick="bulkDeleteJournals()" disabled>حذف المحدد (<span id="jrn-selected-count">0</span>)</button>
       </div>
     </div>
-    <table>
-      <colgroup><col style="width:36px"><col style="width:110px"><col style="width:90px"><col><col><col style="width:90px"><col style="width:90px"><col style="width:70px"></colgroup>
-      <thead><tr>
-        <th><input type="checkbox" id="jrn-select-all" onchange="toggleSelectAllJournals(this)"></th>
-        <th>رقم القيد</th><th>التاريخ</th><th>الحساب</th><th>الطرف</th><th>مدين</th><th>دائن</th><th>حذف</th>
-      </tr></thead>
-      <tbody id="jrn-table"><tr><td colspan="8" class="empty">جاري التحميل...</td></tr></tbody>
-    </table>
+    <div id="jrn-list"><div class="empty">جاري التحميل...</div></div>
   </div>
 </div>
 
@@ -1201,6 +1197,16 @@ function downloadBlob(blob, filename){
 
 let _journals=[];
 let _jrnSelected=new Set();
+let _jrnEditingLine=null;
+
+function groupJournalsByNo(data){
+  const groups={};
+  data.forEach(j=>{
+    if(!groups[j.journal_no]) groups[j.journal_no]=[];
+    groups[j.journal_no].push(j);
+  });
+  return Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(jno=>({jno, lines:groups[jno]}));
+}
 
 async function renderJournals(){
   const dFrom=document.getElementById('jrn-date-from')?.value||'';
@@ -1214,24 +1220,131 @@ async function renderJournals(){
   _jrnSelected.clear();
   updateJrnBulkBtn();
 
+  if(ACCOUNT_OPTIONS.length===0 || LOCATION_OPTIONS.length===0) await loadAccountOptions();
+
   const q=(document.getElementById('jrn-search')?.value||'').toLowerCase();
-  const tbody=document.getElementById('jrn-table');
+  const list=document.getElementById('jrn-list');
   const filtered=_journals.filter(j=>
     !q || (j.account_name||'').toLowerCase().includes(q) ||
     (j.entity_name||'').toLowerCase().includes(q) ||
+    (j.memo||'').toLowerCase().includes(q) ||
     (j.journal_no||'').toLowerCase().includes(q));
-  if(filtered.length===0){tbody.innerHTML='<tr><td colspan="8" class="empty">لا توجد قيود محفوظة</td></tr>';return;}
-  tbody.innerHTML=filtered.map(j=>`
-    <tr>
-      <td><input type="checkbox" class="jrn-row-chk" data-jno="${j.journal_no}" onchange="toggleJrnSelect('${j.journal_no}',this.checked)"></td>
-      <td style="font-family:monospace;font-size:11px;color:var(--gold)">${j.journal_no}</td>
-      <td>${j.journal_date}</td>
-      <td style="font-size:11px">${j.account_name}</td>
-      <td>${j.entity_name||''}</td>
-      <td>${j.debit?fmtNum(j.debit):'—'}</td>
-      <td>${j.credit?fmtNum(j.credit):'—'}</td>
-      <td><button class="btn sm danger" onclick="delJournal('${j.journal_no}')">حذف</button></td>
-    </tr>`).join('');
+
+  if(filtered.length===0){list.innerHTML='<div class="empty">لا توجد قيود محفوظة</div>';return;}
+
+  const journals=groupJournalsByNo(filtered);
+  list.innerHTML=journals.map(je=>renderJournalCard(je)).join('');
+}
+
+function renderJournalCard(je){
+  const first=je.lines[0];
+  const totalDebit=je.lines.reduce((s,l)=>s+(l.debit||0),0);
+  const totalCredit=je.lines.reduce((s,l)=>s+(l.credit||0),0);
+  const balanced=Math.abs(totalDebit-totalCredit)<0.01;
+  const isSelected=_jrnSelected.has(je.jno);
+
+  return `<div class="day-group" style="border:0.5px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#010409;flex-wrap:wrap">
+      <input type="checkbox" class="jrn-row-chk" data-jno="${je.jno}" ${isSelected?'checked':''} onchange="toggleJrnSelect('${je.jno}',this.checked)">
+      <div style="font-family:monospace;font-size:11px;color:var(--gold)">${je.jno}</div>
+      <div style="font-size:11px;color:var(--muted)">${first.journal_date}</div>
+      <div style="font-size:12px;font-weight:600;flex:1;min-width:160px">${first.memo||''}</div>
+      <div style="font-size:11px;color:${first.status==='معتمد'?'var(--success)':'var(--warn)'}">${first.status||'معتمد'}</div>
+      <div style="font-size:10px;color:${balanced?'var(--success)':'var(--danger)'}">${balanced?'✅ متوازن':'❌ غير متوازن'}</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn sm" onclick="downloadSingleJournal('${je.jno}')">تصدير CSV</button>
+        ${first.status==='معتمد'
+          ?`<button class="btn sm" onclick="setJournalStatus('${je.jno}','مسودة')">تحويل لمسودة</button>`
+          :`<button class="btn sm grn" onclick="setJournalStatus('${je.jno}','معتمد')">اعتماد</button>`}
+        <button class="btn sm danger" onclick="delJournal('${je.jno}')">حذف القيد</button>
+      </div>
+    </div>
+    <div style="padding:8px 14px;background:#010409">
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="color:var(--muted)">
+          <th style="text-align:right;padding:2px 6px">الحساب</th>
+          <th style="text-align:right;padding:2px 6px">الطرف</th>
+          <th style="text-align:right;padding:2px 6px">الموقع</th>
+          <th style="text-align:left;padding:2px 6px;width:90px">مدين</th>
+          <th style="text-align:left;padding:2px 6px;width:90px">دائن</th>
+          <th style="width:60px"></th>
+        </tr></thead>
+        <tbody>${je.lines.map(l=>renderJournalLineRow(l)).join('')}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderJournalLineRow(l){
+  const isEditing=_jrnEditingLine===l.id;
+  if(isEditing){
+    const accOpts=ACCOUNT_OPTIONS.map(a=>{
+      const code=a.split(' - ')[0];
+      return `<option value="${a}" ${code===l.account_code?'selected':''}>${a}</option>`;
+    }).join('');
+    const locOpts=LOCATION_OPTIONS.map(loc=>`<option value="${loc}" ${loc===l.location?'selected':''}>${loc}</option>`).join('');
+    return `<tr style="background:#161b22">
+      <td style="padding:3px"><select id="jln-acc-${l.id}" style="width:100%">${accOpts}</select></td>
+      <td style="padding:3px"><input id="jln-ent-${l.id}" type="text" value="${l.entity_name||''}" style="width:100%"></td>
+      <td style="padding:3px"><select id="jln-loc-${l.id}" style="width:100%">${locOpts}</select></td>
+      <td style="padding:3px"><input id="jln-deb-${l.id}" type="number" step="0.01" value="${l.debit||0}" style="width:100%"></td>
+      <td style="padding:3px"><input id="jln-cre-${l.id}" type="number" step="0.01" value="${l.credit||0}" style="width:100%"></td>
+      <td style="padding:3px;display:flex;gap:4px">
+        <button class="btn sm grn" onclick="saveJournalLine(${l.id})">حفظ</button>
+        <button class="btn sm" onclick="cancelJournalLineEdit()">إلغاء</button>
+      </td>
+    </tr>`;
+  }
+  return `<tr>
+    <td style="padding:3px 6px">${l.account_code} - ${l.account_name}</td>
+    <td style="padding:3px 6px">${l.entity_name||''}</td>
+    <td style="padding:3px 6px">${l.location||''}</td>
+    <td style="padding:3px 6px;color:var(--danger)">${l.debit?fmtNum(l.debit):''}</td>
+    <td style="padding:3px 6px;color:var(--success)">${l.credit?fmtNum(l.credit):''}</td>
+    <td style="padding:3px 6px"><button class="btn sm" onclick="startJournalLineEdit(${l.id})">تعديل</button></td>
+  </tr>`;
+}
+
+function startJournalLineEdit(lineId){
+  _jrnEditingLine=lineId;
+  renderJournals();
+}
+
+function cancelJournalLineEdit(){
+  _jrnEditingLine=null;
+  renderJournals();
+}
+
+async function saveJournalLine(lineId){
+  const accVal=document.getElementById(`jln-acc-${lineId}`).value;
+  const accCode=accVal.split(' - ')[0];
+  const accName=accVal.includes(' - ')?accVal.split(' - ').slice(1).join(' - '):accVal;
+  const payload={
+    account_code: accCode,
+    account_name: accName,
+    entity_name: document.getElementById(`jln-ent-${lineId}`).value,
+    location: document.getElementById(`jln-loc-${lineId}`).value,
+    debit: parseFloat(document.getElementById(`jln-deb-${lineId}`).value)||0,
+    credit: parseFloat(document.getElementById(`jln-cre-${lineId}`).value)||0,
+  };
+  await fetch(`/api/journals/line/${lineId}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  _jrnEditingLine=null;
+  renderJournals();
+  showNotif('تم تحديث السطر');
+}
+
+async function setJournalStatus(jno, status){
+  await fetch(`/api/journals/${jno}/status`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
+  renderJournals();
+  showNotif(status==='معتمد'?'تم اعتماد القيد':'تم تحويل القيد لمسودة');
+}
+
+async function downloadSingleJournal(jno){
+  const r=await fetch(`/api/export/journal/${jno}`);
+  if(!r.ok){showNotif('فشل تصدير القيد','error');return;}
+  const blob=await r.blob();
+  downloadBlob(blob, `QB_Journal_${jno}.csv`);
+  showNotif('تم تصدير القيد '+jno);
 }
 
 function clearJrnDateFilter(){
