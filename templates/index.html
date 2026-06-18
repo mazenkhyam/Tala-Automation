@@ -375,7 +375,6 @@ select option{background:var(--card2)}
   <div class="sb-section">العمليات</div>
   <div class="sb-item" data-page="upload"><i class="ti ti-file-upload"></i>رفع كشف البنك</div>
   <div class="sb-item" data-page="review"><i class="ti ti-table-check"></i>مراجعة القيود</div>
-  <div class="sb-item" data-page="export"><i class="ti ti-file-export"></i>التصدير</div>
   <div class="sb-item" data-page="journals"><i class="ti ti-history"></i>سجل القيود</div>
 
   <div class="sb-footer">
@@ -749,56 +748,15 @@ select option{background:var(--card2)}
   </div>
 </div>
 
-<!-- ════ EXPORT ════ -->
-<div class="sc" id="sc-export">
-  <div class="kpi-grid cols4" style="margin-bottom:16px">
-    <div class="kpi green"><div class="kpi-icon"><i class="ti ti-list"></i></div><div class="kpi-lbl">سطور القيود</div><div class="kpi-val" id="exp-lines">0</div></div>
-    <div class="kpi red"><div class="kpi-icon"><i class="ti ti-arrow-up"></i></div><div class="kpi-lbl">إجمالي المدين</div><div class="kpi-val" id="exp-debit">0</div><div class="kpi-sub">ر.س</div></div>
-    <div class="kpi green"><div class="kpi-icon"><i class="ti ti-arrow-down"></i></div><div class="kpi-lbl">إجمالي الدائن</div><div class="kpi-val" id="exp-credit">0</div><div class="kpi-sub">ر.س</div></div>
-    <div class="kpi gold"><div class="kpi-icon"><i class="ti ti-scale"></i></div><div class="kpi-lbl">الميزان</div><div class="kpi-val" id="exp-balance">—</div></div>
-  </div>
-  <div class="card">
-    <div class="card-hdr">
-      <div class="card-title"><i class="ti ti-eye"></i>معاينة — QuickBooks Journal Import</div>
-    </div>
-    <div style="background:var(--bg);border-radius:8px;padding:14px;font-size:11px;font-family:'JetBrains Mono',monospace;
-      color:var(--text3);overflow-x:auto;max-height:250px;overflow-y:auto;margin-bottom:16px;border:1px solid var(--border)" id="export-preview">
-      <div class="empty"><p>لا توجد قيود</p></div>
-    </div>
-    <div class="flex gap10">
-      <button class="btn gold lg" onclick="exportCSV()"><i class="ti ti-download"></i>تصدير CSV — QuickBooks</button>
-      <button class="btn success lg" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i>تصدير Excel مفصّل</button>
-      <button class="btn primary lg" onclick="saveToDb()"><i class="ti ti-device-floppy"></i>حفظ في قاعدة البيانات</button>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-hdr"><div class="card-title"><i class="ti ti-info-circle"></i>خطوات الرفع على QuickBooks</div></div>
-    <div class="grid3">
-      <div style="background:var(--bg);border-radius:8px;padding:14px;border:1px solid var(--border)">
-        <div style="color:var(--gold);font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-bottom:8px">01</div>
-        <div class="bold" style="margin-bottom:4px">فتح الإعدادات</div>
-        <div class="text-muted text-sm">Settings → Import Data → Journal Entries</div>
-      </div>
-      <div style="background:var(--bg);border-radius:8px;padding:14px;border:1px solid var(--border)">
-        <div style="color:var(--gold);font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-bottom:8px">02</div>
-        <div class="bold" style="margin-bottom:4px">رفع الملف</div>
-        <div class="text-muted text-sm">Browse → اختر ملف CSV → Next</div>
-      </div>
-      <div style="background:var(--bg);border-radius:8px;padding:14px;border:1px solid var(--border)">
-        <div style="color:var(--gold);font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-bottom:8px">03</div>
-        <div class="bold" style="margin-bottom:4px">Start Import</div>
-        <div class="text-muted text-sm">تحقق من الـ Map → Start Import → Done</div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ════ JOURNALS ════ -->
 <div class="sc" id="sc-journals">
   <div class="card">
     <div class="card-hdr">
       <div class="card-title"><i class="ti ti-history"></i>سجل القيود المحفوظة</div>
       <div class="card-actions">
+        <button class="btn sm gold" onclick="exportAllCSV()"><i class="ti ti-download"></i>تصدير CSV</button>
+        <button class="btn sm success" onclick="exportAllExcel()"><i class="ti ti-file-spreadsheet"></i>Excel</button>
+        <div class="sep"></div>
         <input type="date" id="jrn-date-from" onchange="renderJournals()" style="width:140px">
         <span class="text-muted text-sm">إلى</span>
         <input type="date" id="jrn-date-to" onchange="renderJournals()" style="width:140px">
@@ -1042,18 +1000,41 @@ select option{background:var(--card2)}
 </div>
 
 <!-- Modal: Edit Tx in Review -->
+<datalist id="master-datalist"></datalist>
 <div class="modal-overlay" id="modal-edit-tx">
-  <div class="modal">
+  <div class="modal" style="width:580px">
     <div class="modal-hdr">
       <div class="modal-title"><i class="ti ti-edit"></i>تعديل العملية</div>
       <button class="modal-close" onclick="closeModal('modal-edit-tx')"><i class="ti ti-x"></i></button>
     </div>
     <input type="hidden" id="edit-tx-idx">
-    <div class="form-group" style="margin-bottom:12px"><label>اسم الطرف</label><input type="text" id="edit-tx-name"></div>
-    <div class="form-group" style="margin-bottom:12px"><label>الحساب</label><select id="edit-tx-acc"></select></div>
-    <div class="form-group"><label>المبلغ</label><input type="number" id="edit-tx-amount" step="0.01"></div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>الطرف (ابحث بالاسم — الحساب يتغير تلقائياً)</label>
+      <input type="text" id="edit-tx-name" list="master-datalist" autocomplete="off"
+        placeholder="اكتب اسم المورد أو العميل..."
+        oninput="onTxNameInput(this.value)">
+      <div style="font-size:10px;color:var(--text3);margin-top:4px" id="edit-tx-entity-hint"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>الحساب (يتحدد تلقائياً عند اختيار الطرف)</label>
+      <select id="edit-tx-acc" onchange="onTxAccChange(this.value)"></select>
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>الشرح / البيان</label>
+      <input type="text" id="edit-tx-memo" placeholder="وصف العملية">
+    </div>
+    <div class="form-grid g2">
+      <div class="form-group">
+        <label>الموقع</label>
+        <select id="edit-tx-location"></select>
+      </div>
+      <div class="form-group">
+        <label>المبلغ</label>
+        <input type="number" id="edit-tx-amount" step="0.01">
+      </div>
+    </div>
     <div class="modal-footer">
-      <button class="btn primary" onclick="saveTxEdit()"><i class="ti ti-check"></i>حفظ</button>
+      <button class="btn primary" onclick="saveTxEdit()"><i class="ti ti-check"></i>حفظ التعديل</button>
       <button class="btn ghost" onclick="closeModal('modal-edit-tx')">إلغاء</button>
     </div>
   </div>
@@ -1065,6 +1046,7 @@ select option{background:var(--card2)}
 ════════════════════════════════════════ */
 let ACCOUNT_OPTIONS = [];
 let LOCATION_OPTIONS = [];
+let MASTER_DATA = []; // موردين + عملاء + مصروفات للـ datalist
 let reviewData = [];
 let exportLines = [];
 let _accounts = [], _suppliers = [], _customers = [], _expenses = [], _locations = [], _master = [];
@@ -1079,7 +1061,7 @@ const PAGE_TITLES = {
   dashboard:'لوحة التحكم', accounts:'شجرة الحسابات', suppliers:'الموردين',
   customers:'العملاء', expenses:'بنود المصروفات', locations:'المواقع',
   master:'البيانات الموحدة', upload:'رفع كشف البنك', review:'مراجعة القيود',
-  export:'التصدير', journals:'سجل القيود'
+  journals:'سجل القيود'
 };
 
 /* ═══════════════════════════════════════
@@ -1218,9 +1200,14 @@ function renderCashFlowChart(data) {
 ════════════════════════════════════════ */
 async function loadAccountOptions(force = false) {
   if (!force && ACCOUNT_OPTIONS.length > 0) return;
-  const [ao, lo] = await Promise.all([fetch('/api/account-options').then(r => r.json()), fetch('/api/location-options').then(r => r.json())]);
+  const [ao, lo, md] = await Promise.all([
+    fetch('/api/account-options').then(r => r.json()),
+    fetch('/api/location-options').then(r => r.json()),
+    fetch('/api/master').then(r => r.json())
+  ]);
   ACCOUNT_OPTIONS = ao;
   LOCATION_OPTIONS = lo;
+  MASTER_DATA = md;
   // populate all account selects
   ['sup-acc', 'cust-acc', 'exp-acc', 'bank-acc', 'edit-sup-acc', 'edit-cust-acc', 'edit-exp-acc', 'edit-tx-acc'].forEach(id => {
     const sel = document.getElementById(id);
@@ -1611,7 +1598,9 @@ async function uploadStatement() {
     const d = await r.json();
     if (d.error) { showNotif(d.error, 'error'); prog.style.display = 'none'; return; }
     fill.style.width = '100%'; lbl.textContent = `اكتملت المعالجة — ${d.count} عملية (${d.detected_bank})`;
-    reviewData = d.transactions;
+    // تعيين الموقع الافتراضي لأي عملية بدون موقع
+    const defaultLoc = LOCATION_OPTIONS[0] || '';
+    reviewData = d.transactions.map(t => ({ ...t, location: t.location || defaultLoc }));
     document.getElementById('upload-preview').style.display = 'block';
     document.getElementById('upload-count').textContent = d.count + ' عملية';
     const tbody = document.getElementById('preview-table');
@@ -1639,22 +1628,40 @@ function buildMemo(entityType, sysName, bankDesc) {
 }
 function previewJournalLines(t) {
   const acc = t.acc_link || '111700 - Bank Clearance Account';
+  const accCode = acc.split(' - ')[0];
   const accName = acc.includes(' - ') ? acc.split(' - ').slice(1).join(' - ') : acc;
   const bankAcc = t.bank_account || '51000 - Bank Alinma';
+  const bankCode = bankAcc.split(' - ')[0];
   const bankName = bankAcc.includes(' - ') ? bankAcc.split(' - ').slice(1).join(' - ') : bankAcc;
-  const memo = buildMemo(t.entity_type, t.sys_name, t.bank_desc);
+  const memo = t.memo || buildMemo(t.entity_type, t.sys_name, t.bank_desc);
   const lines = [];
+
   if (t.amount > 0) {
-    lines.push({ account_name: bankName, debit: t.amount, credit: 0 });
-    lines.push({ account_name: accName, debit: 0, credit: t.amount });
+    // إيداع: مدين البنك / دائن الطرف
+    lines.push({ account_code: bankCode, account_name: bankName, debit: t.amount, credit: 0, memo });
+    lines.push({ account_code: accCode,  account_name: accName,  debit: 0, credit: t.amount, memo });
   } else {
-    const { fee, vat } = extractFee(t.bank_desc);
     const bankTotal = Math.abs(t.amount);
-    const vendorNet = Math.round((bankTotal - fee - vat) * 100) / 100;
-    lines.push({ account_name: accName, debit: vendorNet, credit: 0 });
-    if (fee > 0) lines.push({ account_name: 'Bank charges', debit: fee, credit: 0 });
-    if (vat > 0) lines.push({ account_name: 'VAT Payable', debit: vat, credit: 0 });
-    lines.push({ account_name: bankName, debit: 0, credit: bankTotal });
+    const { fee, vat } = extractFee(t.bank_desc);
+
+    // لو الحساب هو حساب رسوم بنكية (813020) — المبلغ كله رسوم + ضريبتها لو موجودة
+    const isBankChargeAcc = accCode === '813020' || accName.toLowerCase().includes('bank charge');
+    if (isBankChargeAcc) {
+      // الرسوم كاملة بدون تقسيم
+      lines.push({ account_code: accCode, account_name: accName, debit: bankTotal, credit: 0, memo });
+      lines.push({ account_code: bankCode, account_name: bankName, debit: 0, credit: bankTotal, memo });
+    } else if (fee > 0) {
+      // مورد/عميل مع رسوم تحويل مستخرجة من النص
+      const vendorNet = Math.round((bankTotal - fee - vat) * 100) / 100;
+      lines.push({ account_code: accCode, account_name: accName, debit: vendorNet, credit: 0, memo });
+      lines.push({ account_code: '813020', account_name: 'Bank charges', debit: fee, credit: 0, memo: 'BC- ' + memo });
+      if (vat > 0) lines.push({ account_code: '215106', account_name: 'VAT Payable', debit: vat, credit: 0, memo: 'VAT- ' + memo });
+      lines.push({ account_code: bankCode, account_name: bankName, debit: 0, credit: bankTotal, memo });
+    } else {
+      // مورد/عميل بدون رسوم — المبلغ كاملاً للطرف
+      lines.push({ account_code: accCode, account_name: accName, debit: bankTotal, credit: 0, memo });
+      lines.push({ account_code: bankCode, account_name: bankName, debit: 0, credit: bankTotal, memo });
+    }
   }
   return lines;
 }
@@ -1728,15 +1735,16 @@ function renderTxRow(t) {
         <thead><tr><th style="text-align:right;color:var(--text3)">الحساب</th><th style="text-align:left;color:var(--text3);width:110px">مدين</th><th style="text-align:left;color:var(--text3);width:110px">دائن</th></tr></thead>
         <tbody>
           ${lines.map(l => `<tr>
-            <td>${l.account_name}</td>
+            <td><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold);margin-left:6px">${l.account_code||''}</span>${l.account_name}</td>
             <td class="text-red mono">${l.debit ? fmt(l.debit) : ''}</td>
             <td class="text-green mono">${l.credit ? fmt(l.credit) : ''}</td>
           </tr>`).join('')}
         </tbody>
       </table>
       <div class="text-xs text-muted mt4" title="${t.bank_desc}">${t.bank_desc.substring(0, 100)}</div>
+      ${lines[0]?.memo ? `<div class="text-xs mt4" style="color:var(--text2)">📝 ${lines[0].memo}</div>` : ''}
     </div>
-  </div>`;
+  </div>\`;
 }
 
 function toggleDay(date) { if (_openDays.has(date)) _openDays.delete(date); else _openDays.add(date); renderReview(); }
@@ -1744,26 +1752,103 @@ function approveDay(date) { reviewData.forEach(t => { if (t.date === date) t.app
 function unapproveDay(date) { reviewData.forEach(t => { if (t.date === date) t.approved = false; }); renderReview(); }
 function toggleApprove(idx) { const t = reviewData.find(x => x.idx === idx); if (t) t.approved = !t.approved; renderReview(); }
 function deleteTx(idx) { if (!confirm('حذف العملية؟')) return; reviewData = reviewData.filter(t => t.idx !== idx); renderReview(); }
-function approveAll() { reviewData.forEach(t => { if (t.confidence >= 85) t.approved = true; }); renderReview(); showNotif('تم اعتماد كل العمليات الموثوقة'); }
+function approveAll() {
+  // تعيين الموقع الافتراضي لكل عملية ليس لها موقع
+  const defaultLoc = LOCATION_OPTIONS[0] || 'Management';
+  reviewData.forEach(t => {
+    if (t.confidence >= 85) t.approved = true;
+    if (!t.location) t.location = defaultLoc;
+  });
+  renderReview();
+  showNotif('تم اعتماد كل العمليات الموثوقة');
+}
+
+function buildMasterDatalist() {
+  const dl = document.getElementById('master-datalist');
+  if (!dl) return;
+  dl.innerHTML = MASTER_DATA.map(x => `<option value="${x.sys}" data-acc="${x.acc}" data-type="${x.type}">${x.sys} (${x.type})</option>`).join('');
+}
+
+function onTxNameInput(val) {
+  // ابحث في MASTER_DATA عن تطابق
+  const match = MASTER_DATA.find(x => x.sys.toLowerCase() === val.toLowerCase());
+  if (match) {
+    // حدّث الحساب تلقائياً
+    const sel = document.getElementById('edit-tx-acc');
+    if (sel) {
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === match.acc) { sel.selectedIndex = i; break; }
+      }
+    }
+    const hint = document.getElementById('edit-tx-entity-hint');
+    if (hint) hint.textContent = `✓ ${match.type} — حساب: ${match.acc}`;
+    // حدّث الشرح تلقائياً
+    const memoEl = document.getElementById('edit-tx-memo');
+    if (memoEl && !memoEl.dataset.userEdited) {
+      const idx = parseInt(document.getElementById('edit-tx-idx').value);
+      const t = reviewData.find(x => x.idx === idx);
+      const et = match.type === 'مورد' ? 'supplier' : match.type === 'عميل' ? 'customer' : 'expense';
+      memoEl.value = buildMemo(et, val, t ? t.bank_desc : '');
+    }
+  } else {
+    const hint = document.getElementById('edit-tx-entity-hint');
+    if (hint) hint.textContent = '';
+  }
+}
+
+function onTxAccChange(val) {
+  // لو غيّر الحساب يدوياً، نحدّث الـ hint
+  const hint = document.getElementById('edit-tx-entity-hint');
+  if (hint) hint.textContent = `حساب مختار يدوياً: ${val.split(' - ')[0]}`;
+}
 
 function openTxEdit(idx) {
   const t = reviewData.find(x => x.idx === idx); if (!t) return;
+  // تأكد من تحميل بيانات الماستر
+  if (!ACCOUNT_OPTIONS.length) { loadAccountOptions().then(() => openTxEdit(idx)); return; }
+  buildMasterDatalist();
   document.getElementById('edit-tx-idx').value = idx;
   document.getElementById('edit-tx-name').value = t.sys_name || '';
-  document.getElementById('edit-tx-amount').value = t.amount;
+  // الشرح
+  const memoEl = document.getElementById('edit-tx-memo');
+  memoEl.value = buildMemo(t.entity_type, t.sys_name, t.bank_desc);
+  memoEl.dataset.userEdited = '';
+  memoEl.addEventListener('input', () => { memoEl.dataset.userEdited = '1'; }, { once: true });
+  // الحساب
   const sel = document.getElementById('edit-tx-acc');
-  if (ACCOUNT_OPTIONS.length) {
-    sel.innerHTML = ACCOUNT_OPTIONS.map(o => `<option value="${o}" ${o === t.acc_link ? 'selected' : ''}>${o}</option>`).join('');
-  }
+  sel.innerHTML = ACCOUNT_OPTIONS.map(o => `<option value="${o}" ${o === t.acc_link ? 'selected' : ''}>${o}</option>`).join('');
+  // الموقع — الافتراضي = أول موقع رئيسي
+  const locSel = document.getElementById('edit-tx-location');
+  const defaultLoc = t.location || LOCATION_OPTIONS.find(l => l) || '';
+  locSel.innerHTML = LOCATION_OPTIONS.map(l => `<option value="${l}" ${l === defaultLoc ? 'selected' : ''}>${l}</option>`).join('');
+  // المبلغ
+  document.getElementById('edit-tx-amount').value = t.amount;
+  // hint
+  const hint = document.getElementById('edit-tx-entity-hint');
+  if (hint && t.acc_link) hint.textContent = `الحساب الحالي: ${t.acc_link}`;
   openModal('modal-edit-tx');
 }
+
 function saveTxEdit() {
   const idx = parseInt(document.getElementById('edit-tx-idx').value);
   const t = reviewData.find(x => x.idx === idx); if (!t) return;
-  t.sys_name = document.getElementById('edit-tx-name').value;
-  t.acc_link = document.getElementById('edit-tx-acc').value;
-  t.amount = parseFloat(document.getElementById('edit-tx-amount').value) || t.amount;
-  t.method = 'manual'; t.confidence = 100;
+  const newName = document.getElementById('edit-tx-name').value.trim();
+  const newAcc  = document.getElementById('edit-tx-acc').value;
+  const newMemo = document.getElementById('edit-tx-memo').value.trim();
+  const newLoc  = document.getElementById('edit-tx-location').value;
+  const newAmt  = parseFloat(document.getElementById('edit-tx-amount').value);
+  // تحديث نوع الطرف بناءً على الماستر
+  const match = MASTER_DATA.find(x => x.sys === newName);
+  if (match) {
+    t.entity_type = match.type === 'مورد' ? 'supplier' : match.type === 'عميل' ? 'customer' : 'expense';
+  }
+  t.sys_name  = newName;
+  t.acc_link  = newAcc;
+  t.memo      = newMemo;
+  t.location  = newLoc;
+  t.amount    = isNaN(newAmt) ? t.amount : newAmt;
+  t.method    = 'manual';
+  t.confidence = 100;
   closeModal('modal-edit-tx'); renderReview(); showNotif('تم تحديث العملية');
 }
 
@@ -1778,20 +1863,20 @@ async function generateAndGoExport() {
   if (d.error) { showNotif(d.error, 'error'); return; }
   exportLines = d.lines;
   const s = d.stats;
-  document.getElementById('exp-lines').textContent = s.lines;
-  document.getElementById('exp-debit').textContent = fmt(s.total_debit);
-  document.getElementById('exp-credit').textContent = fmt(s.total_credit);
-  document.getElementById('exp-balance').textContent = s.balanced ? '✓ متوازن' : `✗ فرق ${fmt(s.diff)}`;
-  document.getElementById('exp-balance').style.color = s.balanced ? 'var(--green)' : 'var(--red)';
-  const prev = document.getElementById('export-preview');
-  let html = `<div style="color:var(--blue);margin-bottom:8px;opacity:.7">JournalNo,JournalDate,AccountName,Debits,Credits,Description,Name,Location,TaxAmount,TaxName</div>`;
-  exportLines.slice(0, 40).forEach(l => {
-    html += `<div>${l.journal_no||''},${l.journal_date||''},${l.account_code||''},${l.debit||''},${l.credit||''},${(l.memo||'').substring(0,25)},${l.entity_name||''},${l.location||''},${l.tax_amount||''}</div>`;
-  });
-  if (exportLines.length > 40) html += `<div style="color:var(--text3)">... ${exportLines.length - 40} سطر إضافي</div>`;
-  prev.innerHTML = html;
-  nav('export');
+  // حفظ تلقائي مباشر في قاعدة البيانات
+  const rs = await fetch('/api/save-journal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lines: exportLines }) });
+  const ds = await rs.json();
+  const bal = s.balanced ? '✓ متوازن' : `⚠ فرق ${fmt(s.diff)} ر.س`;
+  showNotif(`تم حفظ ${ds.saved} سطر قيد — ${approved.length} عملية — ${bal}`);
+  if (!s.balanced) setTimeout(() => showNotif(`تحذير: الميزان غير متوازن`, 'error'), 500);
+  reviewData = [];
+  document.getElementById('upload-preview').style.display = 'none';
+  document.getElementById('upload-progress').style.display = 'none';
+  document.getElementById('bank-file').value = '';
+  nav('journals');
 }
+
+
 async function exportCSV() {
   if (!exportLines.length) { showNotif('لا توجد قيود — انتقل من شاشة المراجعة أولاً', 'error'); return; }
   const r = await fetch('/api/export/csv', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lines: exportLines }) });
@@ -1869,9 +1954,10 @@ function renderJournalCard(je) {
           <th style="text-align:right;padding:3px 8px">الحساب</th>
           <th style="text-align:right;padding:3px 8px">الطرف</th>
           <th style="text-align:right;padding:3px 8px">الموقع</th>
-          <th style="text-align:left;padding:3px 8px;width:100px">مدين</th>
-          <th style="text-align:left;padding:3px 8px;width:100px">دائن</th>
-          <th style="width:70px;padding:3px 8px"></th>
+          <th style="text-align:right;padding:3px 8px">الشرح</th>
+          <th style="text-align:left;padding:3px 8px;width:90px">مدين</th>
+          <th style="text-align:left;padding:3px 8px;width:90px">دائن</th>
+          <th style="width:50px;padding:3px 8px"></th>
         </tr></thead>
         <tbody>${je.lines.map(l => renderJournalLineRow(l)).join('')}</tbody>
       </table>
@@ -1884,11 +1970,21 @@ function renderJournalLineRow(l) {
     const ao = ACCOUNT_OPTIONS.map(a => `<option value="${a}" ${a.split(' - ')[0] === l.account_code ? 'selected' : ''}>${a}</option>`).join('');
     const lo = LOCATION_OPTIONS.map(loc => `<option value="${loc}" ${loc === l.location ? 'selected' : ''}>${loc}</option>`).join('');
     return `<tr style="background:var(--card2)">
-      <td style="padding:3px"><select id="jln-acc-${l.id}" style="width:100%">${ao}</select></td>
-      <td style="padding:3px"><input id="jln-ent-${l.id}" type="text" value="${l.entity_name || ''}" style="width:100%"></td>
-      <td style="padding:3px"><select id="jln-loc-${l.id}" style="width:100%">${lo}</select></td>
-      <td style="padding:3px"><input id="jln-deb-${l.id}" type="number" step="0.01" value="${l.debit || 0}" style="width:100%"></td>
-      <td style="padding:3px"><input id="jln-cre-${l.id}" type="number" step="0.01" value="${l.credit || 0}" style="width:100%"></td>
+      <td style="padding:3px">
+        <select id="jln-acc-${l.id}" style="width:100%" onchange="onJlnAccChange(${l.id},this.value)">${ao}</select>
+      </td>
+      <td style="padding:3px">
+        <input id="jln-ent-${l.id}" type="text" value="${l.entity_name || ''}" list="master-datalist" style="width:100%"
+          oninput="onJlnEntInput(${l.id},this.value)" placeholder="الطرف...">
+      </td>
+      <td style="padding:3px">
+        <select id="jln-loc-${l.id}" style="width:100%">${lo}</select>
+      </td>
+      <td style="padding:3px">
+        <input id="jln-memo-${l.id}" type="text" value="${(l.memo||'').replace(/"/g,'&quot;')}" style="width:100%" placeholder="الشرح">
+      </td>
+      <td style="padding:3px"><input id="jln-deb-${l.id}" type="number" step="0.01" value="${l.debit || 0}" style="width:80px"></td>
+      <td style="padding:3px"><input id="jln-cre-${l.id}" type="number" step="0.01" value="${l.credit || 0}" style="width:80px"></td>
       <td style="padding:3px;display:flex;gap:4px">
         <button class="btn sm success" onclick="saveJournalLine(${l.id})"><i class="ti ti-check"></i></button>
         <button class="btn sm ghost" onclick="_jrnEditingLine=null;renderJournals()"><i class="ti ti-x"></i></button>
@@ -1896,25 +1992,41 @@ function renderJournalLineRow(l) {
     </tr>`;
   }
   return `<tr>
-    <td style="padding:3px 8px"><span class="tbl-code">${l.account_code}</span> ${l.account_name}</td>
+    <td style="padding:3px 8px"><span class="tbl-code">${l.account_code}</span> <span class="tbl-muted">${l.account_name}</span></td>
     <td style="padding:3px 8px">${l.entity_name || ''}</td>
     <td style="padding:3px 8px">${l.location || ''}</td>
+    <td style="padding:3px 8px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${l.memo||''}">${l.memo || ''}</td>
     <td style="padding:3px 8px" class="text-red mono">${l.debit ? fmt(l.debit) : ''}</td>
     <td style="padding:3px 8px" class="text-green mono">${l.credit ? fmt(l.credit) : ''}</td>
     <td style="padding:3px 8px"><button class="btn sm ghost icon-only" onclick="_jrnEditingLine=${l.id};renderJournals()"><i class="ti ti-edit"></i></button></td>
-  </tr>`;
+  </tr>\`;
 }
+
+function onJlnEntInput(lineId, val) {
+  const match = MASTER_DATA.find(x => x.sys.toLowerCase() === val.toLowerCase());
+  if (match) {
+    const sel = document.getElementById(`jln-acc-${lineId}`);
+    if (sel) {
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === match.acc) { sel.selectedIndex = i; break; }
+      }
+    }
+  }
+}
+function onJlnAccChange(lineId, val) { /* hook for future use */ }
 
 async function saveJournalLine(id) {
   const accVal = document.getElementById(`jln-acc-${id}`).value;
   const accCode = accVal.split(' - ')[0];
   const accName = accVal.includes(' - ') ? accVal.split(' - ').slice(1).join(' - ') : accVal;
+  const memoEl = document.getElementById(`jln-memo-${id}`);
   await fetch(`/api/journals/line/${id}`, {
     method: 'PATCH', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       account_code: accCode, account_name: accName,
       entity_name: document.getElementById(`jln-ent-${id}`).value,
       location: document.getElementById(`jln-loc-${id}`).value,
+      memo: memoEl ? memoEl.value : '',
       debit: parseFloat(document.getElementById(`jln-deb-${id}`).value) || 0,
       credit: parseFloat(document.getElementById(`jln-cre-${id}`).value) || 0,
     })
@@ -1951,6 +2063,30 @@ async function bulkDeleteJournals() {
 async function delJournal(jno) {
   if (!confirm('حذف القيد ' + jno + '؟')) return;
   await fetch('/api/journals/' + jno, { method: 'DELETE' }); renderJournals(); showNotif('تم حذف القيد');
+}
+
+
+async function exportAllCSV() {
+  if (exportLines.length) {
+    const r = await fetch('/api/export/csv', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lines: exportLines }) });
+    dlBlob(await r.blob(), 'QB_Journal.csv'); showNotif('تم تحميل CSV');
+    return;
+  }
+  const df = document.getElementById('jrn-date-from')?.value || '';
+  const dt = document.getElementById('jrn-date-to')?.value || '';
+  const qs = new URLSearchParams();
+  if (df) qs.set('date_from', df); if (dt) qs.set('date_to', dt);
+  window.open('/api/journals/export/csv' + (qs.toString() ? '?' + qs.toString() : ''), '_blank');
+  showNotif('جاري تحميل CSV...', 'info');
+}
+async function exportAllExcel() {
+  if (exportLines.length) {
+    const r = await fetch('/api/export/excel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lines: exportLines }) });
+    dlBlob(await r.blob(), 'Journal.xlsx'); showNotif('تم تحميل Excel');
+    return;
+  }
+  window.open('/api/journals/export/excel', '_blank');
+  showNotif('جاري تحميل Excel...', 'info');
 }
 
 // ── INIT ──
