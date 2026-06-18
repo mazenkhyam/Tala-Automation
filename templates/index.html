@@ -1744,7 +1744,7 @@ function renderTxRow(t) {
       <div class="text-xs text-muted mt4" title="${t.bank_desc}">${t.bank_desc.substring(0, 100)}</div>
       ${lines[0]?.memo ? `<div class="text-xs mt4" style="color:var(--text2)">📝 ${lines[0].memo}</div>` : ''}
     </div>
-  </div>\`;
+  </div>`;
 }
 
 function toggleDay(date) { if (_openDays.has(date)) _openDays.delete(date); else _openDays.add(date); renderReview(); }
@@ -1999,7 +1999,7 @@ function renderJournalLineRow(l) {
     <td style="padding:3px 8px" class="text-red mono">${l.debit ? fmt(l.debit) : ''}</td>
     <td style="padding:3px 8px" class="text-green mono">${l.credit ? fmt(l.credit) : ''}</td>
     <td style="padding:3px 8px"><button class="btn sm ghost icon-only" onclick="_jrnEditingLine=${l.id};renderJournals()"><i class="ti ti-edit"></i></button></td>
-  </tr>\`;
+  </tr>`;
 }
 
 function onJlnEntInput(lineId, val) {
