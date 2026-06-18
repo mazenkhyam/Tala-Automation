@@ -905,3 +905,41 @@ def api_cashflow():
     """, conn)
     conn.close()
     return jsonify(df.to_dict('records'))
+
+# ══════════════════════════════════════════════════════════════
+# API — تصدير سجل القيود المحفوظة (CSV / Excel) من قاعدة البيانات
+# ══════════════════════════════════════════════════════════════
+@app.route('/api/journals/export/csv')
+def api_journals_export_csv():
+    date_from = request.args.get('date_from', '')
+    date_to   = request.args.get('date_to', '')
+    query = "SELECT journal_no,journal_date,account_code,debit,credit,memo,entity_name,location,tax_amount FROM journals WHERE 1=1"
+    params = []
+    if date_from: query += " AND journal_date >= ?"; params.append(date_from)
+    if date_to:   query += " AND journal_date <= ?"; params.append(date_to)
+    query += " ORDER BY journal_date DESC, journal_no DESC, line_no ASC"
+    conn = get_conn()
+    df = pd.read_sql_query(query, conn, params=params)
+    conn.close()
+    if df.empty:
+        return jsonify({'error': 'لا توجد قيود'}), 404
+    # أعِد تسمية العمود ليتوافق مع دالة journals_to_qb_csv
+    df = df.rename(columns={'memo': 'memo'})
+    csv_bytes = journals_to_qb_csv(df)
+    return send_file(BytesIO(csv_bytes), mimetype='text/csv', as_attachment=True,
+                     download_name=f"QB_Journal_{datetime.date.today()}.csv")
+
+
+@app.route('/api/journals/export/excel')
+def api_journals_export_excel():
+    conn = get_conn()
+    df = pd.read_sql_query(
+        "SELECT * FROM journals ORDER BY journal_date DESC, journal_no DESC, line_no ASC", conn)
+    conn.close()
+    if df.empty:
+        return jsonify({'error': 'لا توجد قيود'}), 404
+    xl_bytes = journals_to_excel(df)
+    return send_file(BytesIO(xl_bytes),
+                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                     as_attachment=True,
+                     download_name=f"Journal_{datetime.date.today()}.xlsx")
