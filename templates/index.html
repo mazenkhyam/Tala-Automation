@@ -368,7 +368,7 @@ select option{background:var(--card2)}
 /* ═══ SEARCHABLE DROPDOWN (entity/account picker) ═══ */
 .sdd{position:relative}
 .sdd-input{width:100%}
-.sdd-list{position:absolute;z-index:50;top:calc(100% + 2px);right:0;left:0;max-height:220px;overflow-y:auto;
+.sdd-list{position:fixed;z-index:9999;max-height:220px;overflow-y:auto;
   background:var(--card2,#1a2332);border:1px solid var(--border,#2a3548);border-radius:8px;
   box-shadow:0 8px 24px rgba(0,0,0,.4);display:none}
 .sdd-list.open{display:block}
@@ -516,25 +516,13 @@ select option{background:var(--card2)}
 
     <div class="card" style="margin-bottom:0;display:flex;flex-direction:column">
       <div class="card-hdr">
-        <div class="card-title"><i class="ti ti-building-store"></i>سدادات الموردين خلال الشهر</div>
+        <div class="card-title"><i class="ti ti-building-store"></i>الموردين والسدادات خلال الشهر</div>
         <span class="text-xs text-muted" id="cf-month-label"></span>
       </div>
-      <div id="supplier-payments-list" style="flex:1;max-height:280px;overflow-y:auto">
+      <div id="supplier-payments-list" style="flex:1;max-height:340px;overflow-y:auto">
         <div class="text-muted text-sm" style="padding:20px 0;text-align:center">جاري التحميل...</div>
       </div>
       <div class="status-pill-row" id="status-pill-row"></div>
-    </div>
-  </div>
-
-  <!-- Category Totals (كهرباء / اتصالات / حكومي) -->
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-hdr">
-      <div class="card-title"><i class="ti ti-category"></i>السدادات حسب التصنيف — الشهر المحدد</div>
-    </div>
-    <div class="kpi-grid cols3" id="category-totals-grid">
-      <div class="kpi blue"><div class="kpi-icon"><i class="ti ti-bolt"></i></div><div class="kpi-lbl">كهرباء</div><div class="kpi-val" id="cat-electricity">—</div></div>
-      <div class="kpi purple"><div class="kpi-icon"><i class="ti ti-phone"></i></div><div class="kpi-lbl">اتصالات</div><div class="kpi-val" id="cat-telecom">—</div></div>
-      <div class="kpi gold"><div class="kpi-icon"><i class="ti ti-building-government"></i></div><div class="kpi-lbl">حكومي</div><div class="kpi-val" id="cat-gov">—</div></div>
     </div>
   </div>
 
@@ -1339,26 +1327,31 @@ async function loadCashflowMonth(month) {
 
     renderCashFlowChart(cf.daily || []);
 
-    // Supplier Payments List
+    // Supplier Payments List (مع وسم التصنيف وملخص أعلى القائمة)
     const spList = document.getElementById('supplier-payments-list');
+    const cat = cf.category_totals || {};
+    const catIcons = { 'كهرباء': 'ti-bolt', 'اتصالات': 'ti-phone', 'حكومي': 'ti-building-government' };
+    const catSummary = Object.entries(cat).filter(([, v]) => v > 0);
+    let html = '';
+    if (catSummary.length) {
+      html += `<div style="display:flex;gap:8px;flex-wrap:wrap;padding:8px 0 12px;border-bottom:1px solid var(--border);margin-bottom:8px">
+        ${catSummary.map(([name, val]) => `<span class="badge muted" style="gap:5px"><i class="ti ${catIcons[name] || 'ti-tag'}"></i>${name}: ${fmtShort(val)} ر.س</span>`).join('')}
+      </div>`;
+    }
     if (!cf.suppliers || !cf.suppliers.length) {
-      spList.innerHTML = '<div class="text-muted text-sm" style="padding:20px 0;text-align:center">لا توجد سدادات خلال هذا الشهر</div>';
+      html += '<div class="text-muted text-sm" style="padding:20px 0;text-align:center">لا توجد سدادات خلال هذا الشهر</div>';
     } else {
-      spList.innerHTML = cf.suppliers.map(s => `<div class="bank-bal-row">
+      html += cf.suppliers.map(s => `<div class="bank-bal-row">
         <div class="bank-bal-name">
-          <i class="ti ti-building-store text-muted"></i>${s.entity_name}
+          <i class="ti ${s.category ? (catIcons[s.category] || 'ti-building-store') : 'ti-building-store'} text-muted"></i>${s.entity_name}
+          ${s.category ? `<span class="badge muted text-xs">${s.category}</span>` : ''}
           ${s.invoice_no ? `<span class="badge muted text-xs">فاتورة ${s.invoice_no}</span>` : ''}
           <span class="text-xs text-muted">(${s.count} عملية)</span>
         </div>
         <div class="bank-bal-amt text-red">${fmt(s.total)} ر.س</div>
       </div>`).join('');
     }
-
-    // Category Totals
-    const cat = cf.category_totals || {};
-    document.getElementById('cat-electricity').textContent = fmtShort(cat['كهرباء'] || 0) + ' ر.س';
-    document.getElementById('cat-telecom').textContent = fmtShort(cat['اتصالات'] || 0) + ' ر.س';
-    document.getElementById('cat-gov').textContent = fmtShort(cat['حكومي'] || 0) + ' ر.س';
+    spList.innerHTML = html;
   } catch (e) { console.error(e); }
 }
 
