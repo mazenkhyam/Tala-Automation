@@ -162,14 +162,55 @@ def api_dashboard():
 
     df = pd.read_sql_query("SELECT debit, credit, journal_date, account_name, entity_name "
                             "FROM journals ORDER BY created_at DESC LIMIT 10", conn)
-    total_debit = pd.read_sql_query("SELECT COALESCE(SUM(debit),0) s FROM journals", conn)['s'][0]
-    total_credit = pd.read_sql_query("SELECT COALESCE(SUM(credit),0) s FROM journals", conn)['s'][0]
+
+    # إجمالي الإيداعات/المسحوبات الحقيقي = من سطور حسابات البنوك فقط
+    # (جمع كل الجدول يعطي مدين=دائن دائماً لأن كل قيد متوازن بالتعريف، وهذا غير مفيد كمؤشر كاش فلو)
+    bank_codes = [acc.split(' - ')[0] for acc in BANK_ACCOUNTS.values()]
+    placeholders = ','.join('?' * len(bank_codes))
+    cash_row = conn.execute(f"""
+        SELECT COALESCE(SUM(CASE WHEN debit > 0 THEN debit ELSE 0 END),0) inflow,
+               COALESCE(SUM(CASE WHEN credit > 0 THEN credit ELSE 0 END),0) outflow
+        FROM journals WHERE account_code IN ({placeholders})
+    """, bank_codes).fetchone()
+    total_inflow = cash_row['inflow']
+    total_outflow = cash_row['outflow']
+
+    # أكبر 5 بنود مصروفات (حسب إجمالي المدين على حسابات غير حسابات البنوك)
+    top_expenses_rows = conn.execute(f"""
+        SELECT account_name, SUM(debit) total
+        FROM journals
+        WHERE debit > 0 AND account_code NOT IN ({placeholders})
+        GROUP BY account_name ORDER BY total DESC LIMIT 5
+    """, bank_codes).fetchall()
+    top_expenses = [{'name': r['account_name'], 'total': float(r['total'])} for r in top_expenses_rows]
+
+    # عدد القيود المعتمدة/المسودة
+    status_rows = conn.execute(
+        "SELECT status, COUNT(DISTINCT journal_no) c FROM journals GROUP BY status"
+    ).fetchall()
+    status_counts = {r['status']: r['c'] for r in status_rows}
+
+    # رصيد كل حساب بنكي حالياً (تقديري: مدين - دائن منذ بداية السجل)
+    bank_balances = []
+    for bank_name, acc_link in BANK_ACCOUNTS.items():
+        code = acc_link.split(' - ')[0]
+        row = conn.execute(
+            "SELECT COALESCE(SUM(debit),0) d, COALESCE(SUM(credit),0) c FROM journals WHERE account_code=?",
+            (code,)
+        ).fetchone()
+        balance = float(row['d']) - float(row['c'])
+        if row['d'] or row['c']:
+            bank_balances.append({'bank': bank_name, 'account': acc_link, 'balance': balance})
 
     conn.close()
     return jsonify({
         'stats': {k: int(v) for k, v in stats.items()},
-        'total_debit': float(total_debit),
-        'total_credit': float(total_credit),
+        'total_inflow': float(total_inflow),
+        'total_outflow': float(total_outflow),
+        'net_cash_flow': float(total_inflow - total_outflow),
+        'top_expenses': top_expenses,
+        'status_counts': status_counts,
+        'bank_balances': bank_balances,
         'recent_journals': df.to_dict('records'),
     })
 
@@ -412,12 +453,16 @@ def api_upload():
     if df_raw.empty:
         return jsonify({'error': 'لم يُعثر على بيانات في الملف'}), 400
 
-    # الموقع الافتراضي = الموقع الرئيسي المسجّل في صفحة "المواقع" (إن وُجد)
+    # الموقع الافتراضي = "Management" دائماً (إن وُجد في جدول المواقع)، وإلا أول موقع رئيسي مسجّل
     conn = get_conn()
     default_loc_row = conn.execute(
-        "SELECT name FROM locations ORDER BY is_main DESC, id ASC LIMIT 1"
+        "SELECT name FROM locations WHERE name = 'Management' LIMIT 1"
     ).fetchone()
-    default_location = default_loc_row['name'] if default_loc_row else ''
+    if not default_loc_row:
+        default_loc_row = conn.execute(
+            "SELECT name FROM locations ORDER BY is_main DESC, id ASC LIMIT 1"
+        ).fetchone()
+    default_location = default_loc_row['name'] if default_loc_row else 'Management'
     conn.close()
 
     master = load_master()
@@ -893,16 +938,25 @@ def api_locations_update(item_id):
 
 @app.route('/api/dashboard/cashflow')
 def api_cashflow():
-    """بيانات Cash Flow شهرية للـ Dashboard"""
+    """
+    بيانات Cash Flow شهرية للـ Dashboard.
+    يُحسب فقط من سطور حسابات البنوك (Cash/Bank accounts)، لأن أي قيد متوازن
+    بالتعريف (إجمالي مدين = إجمالي دائن على مستوى كل سطوره)، فحساب التدفق من
+    إجمالي مدين/دائن الجدول كله يساوي بينهما دائماً وهذا غير صحيح لتحليل الكاش فلو.
+    على حساب البنك: مدين = تدفق داخل (Inflow/إيداع)، دائن = تدفق خارج (Outflow/مسحوبات).
+    """
+    bank_codes = [acc.split(' - ')[0] for acc in BANK_ACCOUNTS.values()]
+    placeholders = ','.join('?' * len(bank_codes))
     conn = get_conn()
-    df = pd.read_sql_query("""
+    df = pd.read_sql_query(f"""
         SELECT strftime('%Y-%m', journal_date) as month,
-               SUM(CASE WHEN credit > 0 THEN credit ELSE 0 END) as inflow,
-               SUM(CASE WHEN debit > 0 THEN debit ELSE 0 END) as outflow
+               SUM(CASE WHEN debit > 0 THEN debit ELSE 0 END) as inflow,
+               SUM(CASE WHEN credit > 0 THEN credit ELSE 0 END) as outflow
         FROM journals
         WHERE journal_date >= date('now', '-6 months')
+          AND account_code IN ({placeholders})
         GROUP BY month ORDER BY month
-    """, conn)
+    """, conn, params=bank_codes)
     conn.close()
     return jsonify(df.to_dict('records'))
 
@@ -917,14 +971,12 @@ def api_journals_export_csv():
     params = []
     if date_from: query += " AND journal_date >= ?"; params.append(date_from)
     if date_to:   query += " AND journal_date <= ?"; params.append(date_to)
-    query += " ORDER BY journal_date DESC, journal_no DESC, line_no ASC"
+    query += " ORDER BY journal_date ASC, journal_no ASC, line_no ASC"
     conn = get_conn()
     df = pd.read_sql_query(query, conn, params=params)
     conn.close()
     if df.empty:
         return jsonify({'error': 'لا توجد قيود'}), 404
-    # أعِد تسمية العمود ليتوافق مع دالة journals_to_qb_csv
-    df = df.rename(columns={'memo': 'memo'})
     csv_bytes = journals_to_qb_csv(df)
     return send_file(BytesIO(csv_bytes), mimetype='text/csv', as_attachment=True,
                      download_name=f"QB_Journal_{datetime.date.today()}.csv")
@@ -934,7 +986,7 @@ def api_journals_export_csv():
 def api_journals_export_excel():
     conn = get_conn()
     df = pd.read_sql_query(
-        "SELECT * FROM journals ORDER BY journal_date DESC, journal_no DESC, line_no ASC", conn)
+        "SELECT * FROM journals ORDER BY journal_date ASC, journal_no ASC, line_no ASC", conn)
     conn.close()
     if df.empty:
         return jsonify({'error': 'لا توجد قيود'}), 404
