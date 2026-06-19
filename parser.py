@@ -63,12 +63,8 @@ def _detect_bank(df: pd.DataFrame) -> str:
 # ══════════════════════════════════════════════════════════
 def _parse_alinma_official(file_bytes: bytes) -> pd.DataFrame:
     """
-    يقرأ كشف الإنماء الرسمي مباشرة بـ openpyxl.
-    يدعم صيغتين:
-      1) كشف طويل: صفوف رأسية/إحصاءات أولاً، ثم صف هيدر، ثم بيانات.
-      2) كشف "Statement Report" مباشر: صف هيدر في أول صف، ثم بيانات.
-    الأعمدة تُحدَّد بالاسم (Balance / Credit-Debit / Description / Date)
-    بدلاً من أرقام أعمدة ثابتة، لأن ترتيب الأعمدة يختلف بين الصيغتين.
+    يقرأ كشف الإنماء الرسمي مباشرة بـ openpyxl
+    متجاوزاً الصفوف الأولى (رأسيات + إحصاءات الحساب)
     """
     import openpyxl
     wb = openpyxl.load_workbook(BytesIO(file_bytes), read_only=True, data_only=True)
@@ -84,31 +80,8 @@ def _parse_alinma_official(file_bytes: bytes) -> pd.DataFrame:
             break
 
     if header_idx is None:
-        # fallback: جرب من صف 16 (الصيغة الطويلة القديمة)
+        # fallback: جرب من صف 16
         header_idx = 16
-
-    header_row = all_rows[header_idx]
-
-    # حدد فهرس كل عمود مطلوب بالاسم (case-insensitive، يدعم العربي/الإنجليزي)
-    def _find_col(names):
-        for j, cell in enumerate(header_row):
-            if not cell:
-                continue
-            cell_s = str(cell)
-            for n in names:
-                if n in cell_s:
-                    return j
-        return None
-
-    col_amount = _find_col(['Credit/Debit', 'دائن/مدين'])
-    col_desc   = _find_col(['Transaction Description', 'تفاصيل العملية', 'Description', 'Narration'])
-    col_date   = _find_col(['Transaction Date', 'تاريخ العملية', 'Date'])
-    col_balance = _find_col(['Balance', 'الرصيد'])
-
-    # fallback لو مش لقي بعض الأعمدة بالاسم: استخدم المواقع الافتراضية للصيغة الطويلة
-    if col_amount is None: col_amount = 2
-    if col_desc is None:   col_desc = 3
-    if col_date is None:   col_date = 11
 
     data_rows = all_rows[header_idx + 1:]
 
@@ -116,10 +89,12 @@ def _parse_alinma_official(file_bytes: bytes) -> pd.DataFrame:
     for row in data_rows:
         if not row or all(v is None for v in row):
             continue
-
-        amount_raw = row[col_amount] if len(row) > col_amount else None
-        desc_raw   = row[col_desc] if len(row) > col_desc else None
-        date_raw   = row[col_date] if len(row) > col_date else None
+        # col 2 = amount (negative=debit, positive=credit as signed)
+        # col 3 = description
+        # col 11 = date (DD/MM/YYYY)
+        amount_raw = row[2] if len(row) > 2 else None
+        desc_raw   = row[3] if len(row) > 3 else None
+        date_raw   = row[11] if len(row) > 11 else None
 
         if amount_raw is None and desc_raw is None:
             continue
@@ -133,7 +108,6 @@ def _parse_alinma_official(file_bytes: bytes) -> pd.DataFrame:
 
         # amount سالب = سحب (debit)، موجب = إيداع (credit)
         debit  = abs(amount) if amount < 0 else 0.0
-
         credit = amount if amount > 0 else 0.0
 
         rows.append({
