@@ -66,6 +66,13 @@ def _ensure_tables(conn):
             parent_id INTEGER,
             city      TEXT
         );
+        CREATE TABLE IF NOT EXISTS banks (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            bank_key   TEXT UNIQUE NOT NULL,
+            bank_label TEXT NOT NULL,
+            acc_link   TEXT NOT NULL,
+            parser_type TEXT DEFAULT 'Generic'
+        );
         CREATE TABLE IF NOT EXISTS journals (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             journal_no    TEXT NOT NULL,
@@ -103,9 +110,34 @@ def _ensure_tables(conn):
         conn.execute("ALTER TABLE journals ADD COLUMN source_bank TEXT")
     conn.commit()
 
+    # بذر جدول البنوك من BANK_ACCOUNTS مرة واحدة فقط (أول تشغيل بعد الترقية)
+    bank_count = conn.execute("SELECT COUNT(*) c FROM banks").fetchone()['c']
+    if bank_count == 0:
+        seed_labels = {
+            'AlAhli': 'الأهلي السعودي (AlAhli)',
+            'Alinma': 'بنك الإنماء (Alinma)',
+            'Riyad':  'بنك الرياض (Riyad)',
+        }
+        for key, acc_link in BANK_ACCOUNTS.items():
+            conn.execute(
+                "INSERT OR IGNORE INTO banks (bank_key, bank_label, acc_link, parser_type) VALUES (?,?,?,?)",
+                (key, seed_labels.get(key, key), acc_link, key)
+            )
+        conn.commit()
+
 
 def rows_to_list(rows):
     return [dict(r) for r in rows]
+
+
+def get_bank_accounts():
+    """يرجع dict {bank_label: acc_link} من جدول banks (بدلاً من القائمة الثابتة BANK_ACCOUNTS)."""
+    conn = get_conn()
+    rows = conn.execute("SELECT bank_label, acc_link FROM banks").fetchall()
+    conn.close()
+    if not rows:
+        return dict(BANK_ACCOUNTS)  # احتياطي لو الجدول فاضي لأي سبب
+    return {r['bank_label']: r['acc_link'] for r in rows}
 
 
 # ══════════════════════════════════════════════════════════════
@@ -165,7 +197,7 @@ def api_dashboard():
 
     # إجمالي الإيداعات/المسحوبات الحقيقي = من سطور حسابات البنوك فقط
     # (جمع كل الجدول يعطي مدين=دائن دائماً لأن كل قيد متوازن بالتعريف، وهذا غير مفيد كمؤشر كاش فلو)
-    bank_codes = [acc.split(' - ')[0] for acc in BANK_ACCOUNTS.values()]
+    bank_codes = [acc.split(' - ')[0] for acc in get_bank_accounts().values()]
     placeholders = ','.join('?' * len(bank_codes))
     cash_row = conn.execute(f"""
         SELECT COALESCE(SUM(CASE WHEN debit > 0 THEN debit ELSE 0 END),0) inflow,
@@ -192,7 +224,7 @@ def api_dashboard():
 
     # رصيد كل حساب بنكي حالياً (تقديري: مدين - دائن منذ بداية السجل)
     bank_balances = []
-    for bank_name, acc_link in BANK_ACCOUNTS.items():
+    for bank_name, acc_link in get_bank_accounts().items():
         code = acc_link.split(' - ')[0]
         row = conn.execute(
             "SELECT COALESCE(SUM(debit),0) d, COALESCE(SUM(credit),0) c FROM journals WHERE account_code=?",
@@ -406,6 +438,64 @@ def api_locations_add():
 def api_locations_delete(item_id):
     conn = get_conn()
     conn.execute("DELETE FROM locations WHERE id=?", (item_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
+# ══════════════════════════════════════════════════════════════
+# API — Banks (إدارة البنوك: إضافة / تعديل / حذف)
+# ══════════════════════════════════════════════════════════════
+@app.route('/api/banks', methods=['GET'])
+def api_banks_list():
+    conn = get_conn()
+    rows = rows_to_list(conn.execute(
+        "SELECT id, bank_key, bank_label, acc_link, parser_type FROM banks ORDER BY id"
+    ).fetchall())
+    conn.close()
+    return jsonify(rows)
+
+
+@app.route('/api/banks', methods=['POST'])
+def api_banks_add():
+    data = request.json
+    bank_key = str(data.get('bank_key', '')).strip()
+    bank_label = str(data.get('bank_label', '')).strip()
+    acc_link = str(data.get('acc_link', '')).strip()
+    parser_type = data.get('parser_type', 'Generic')
+    if not bank_key or not bank_label or not acc_link:
+        return jsonify({'error': 'اكمل بيانات البنك (المفتاح، الاسم، الحساب)'}), 400
+    conn = get_conn()
+    try:
+        conn.execute(
+            "INSERT INTO banks (bank_key, bank_label, acc_link, parser_type) VALUES (?,?,?,?)",
+            (bank_key, bank_label, acc_link, parser_type)
+        )
+        conn.commit()
+    except sqlite3.IntegrityError:
+        conn.close()
+        return jsonify({'error': 'مفتاح البنك مستخدم بالفعل'}), 400
+    conn.close()
+    return jsonify({'success': True})
+
+
+@app.route('/api/banks/<int:item_id>', methods=['PUT'])
+def api_banks_update(item_id):
+    data = request.json
+    conn = get_conn()
+    conn.execute(
+        "UPDATE banks SET bank_label=?, acc_link=?, parser_type=? WHERE id=?",
+        (data.get('bank_label', ''), data.get('acc_link', ''), data.get('parser_type', 'Generic'), item_id)
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True})
+
+
+@app.route('/api/banks/<int:item_id>', methods=['DELETE'])
+def api_banks_delete(item_id):
+    conn = get_conn()
+    conn.execute("DELETE FROM banks WHERE id=?", (item_id,))
     conn.commit()
     conn.close()
     return jsonify({'success': True})
@@ -945,7 +1035,7 @@ def api_cashflow():
     إجمالي مدين/دائن الجدول كله يساوي بينهما دائماً وهذا غير صحيح لتحليل الكاش فلو.
     على حساب البنك: مدين = تدفق داخل (Inflow/إيداع)، دائن = تدفق خارج (Outflow/مسحوبات).
     """
-    bank_codes = [acc.split(' - ')[0] for acc in BANK_ACCOUNTS.values()]
+    bank_codes = [acc.split(' - ')[0] for acc in get_bank_accounts().values()]
     placeholders = ','.join('?' * len(bank_codes))
     conn = get_conn()
     df = pd.read_sql_query(f"""
