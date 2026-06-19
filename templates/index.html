@@ -270,6 +270,21 @@ select option{background:var(--card2)}
 .cf-bar{border-radius:3px 3px 0 0;min-height:4px;transition:height .4s ease;width:14px}
 .cf-bar.inflow{background:var(--green);opacity:.8}
 .cf-bar.outflow{background:var(--red);opacity:.8}
+
+/* ═══ DASHBOARD: bank balances, top expenses, status breakdown ═══ */
+.bank-bal-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)}
+.bank-bal-row:last-child{border-bottom:none}
+.bank-bal-name{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:8px}
+.bank-bal-amt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px}
+.top-exp-row{display:flex;align-items:center;gap:10px;padding:7px 0}
+.top-exp-bar-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.top-exp-bar-fill{height:100%;background:var(--gold);border-radius:3px}
+.top-exp-name{font-size:11px;color:var(--text2);min-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top-exp-val{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);min-width:70px;text-align:left}
+.status-pill-row{display:flex;gap:10px;margin-top:10px}
+.status-pill{flex:1;text-align:center;padding:10px;border-radius:10px;background:var(--card2)}
+.status-pill .num{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.status-pill .lbl{font-size:10px;color:var(--text3);margin-top:2px}
 .cf-lbl{font-size:9px;color:var(--text3);text-align:center}
 
 /* ═══ UPLOAD ZONE ═══ */
@@ -349,6 +364,18 @@ select option{background:var(--card2)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
 .text-sm{font-size:11px}.text-xs{font-size:10px}
+
+/* ═══ SEARCHABLE DROPDOWN (entity/account picker) ═══ */
+.sdd{position:relative}
+.sdd-input{width:100%}
+.sdd-list{position:absolute;z-index:50;top:calc(100% + 2px);right:0;left:0;max-height:220px;overflow-y:auto;
+  background:var(--card2,#1a2332);border:1px solid var(--border,#2a3548);border-radius:8px;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);display:none}
+.sdd-list.open{display:block}
+.sdd-item{padding:7px 10px;font-size:12px;cursor:pointer;display:flex;justify-content:space-between;gap:8px;white-space:nowrap;overflow:hidden}
+.sdd-item:hover,.sdd-item.active{background:var(--card3,#212c40)}
+.sdd-item .sdd-acc{color:var(--gold,#d4af37);font-size:10px;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.sdd-empty{padding:8px 10px;font-size:11px;color:var(--text3)}
 </style>
 </head>
 <body>
@@ -437,8 +464,8 @@ select option{background:var(--card2)}
       <div class="card-hdr">
         <div class="card-title"><i class="ti ti-chart-bar"></i>التدفق النقدي — آخر 6 أشهر</div>
         <div class="flex gap6">
-          <span class="badge green"><i class="ti ti-arrow-down"></i>إيرادات</span>
-          <span class="badge red"><i class="ti ti-arrow-up"></i>مدفوعات</span>
+          <span class="badge green"><i class="ti ti-arrow-down"></i>إيداعات</span>
+          <span class="badge red"><i class="ti ti-arrow-up"></i>مسحوبات</span>
         </div>
       </div>
       <div id="cf-chart-wrap">
@@ -460,7 +487,33 @@ select option{background:var(--card2)}
       </div>
     </div>
 
-    <!-- Quick Actions -->
+    <!-- Bank Balances -->
+    <div class="card" style="margin-bottom:0;display:flex;flex-direction:column">
+      <div class="card-hdr">
+        <div class="card-title"><i class="ti ti-building-bank"></i>أرصدة الحسابات البنكية</div>
+      </div>
+      <div id="bank-balances-list" style="flex:1">
+        <div class="text-muted text-sm" style="padding:20px 0;text-align:center">جاري التحميل...</div>
+      </div>
+      <div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--border)">
+        <div class="text-xs text-muted" style="line-height:1.7">
+          يدعم: بنك الأهلي السعودي · بنك الإنماء · بنك الرياض
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Expenses + Quick Actions + Status -->
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-hdr">
+        <div class="card-title"><i class="ti ti-chart-pie"></i>أكبر بنود المصروفات</div>
+      </div>
+      <div id="top-expenses-list">
+        <div class="text-muted text-sm" style="padding:20px 0;text-align:center">جاري التحميل...</div>
+      </div>
+    </div>
+
     <div class="card" style="margin-bottom:0;display:flex;flex-direction:column">
       <div class="card-hdr">
         <div class="card-title"><i class="ti ti-zap"></i>إجراءات سريعة</div>
@@ -476,11 +529,7 @@ select option{background:var(--card2)}
           <i class="ti ti-history"></i> سجل القيود المحفوظة
         </button>
       </div>
-      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
-        <div class="text-xs text-muted" style="line-height:1.7">
-          يدعم: بنك الأهلي السعودي · بنك الإنماء · بنك الرياض
-        </div>
-      </div>
+      <div class="status-pill-row" id="status-pill-row"></div>
     </div>
   </div>
 
@@ -1000,7 +1049,6 @@ select option{background:var(--card2)}
 </div>
 
 <!-- Modal: Edit Tx in Review -->
-<datalist id="master-datalist"></datalist>
 <div class="modal-overlay" id="modal-edit-tx">
   <div class="modal" style="width:580px">
     <div class="modal-hdr">
@@ -1008,15 +1056,11 @@ select option{background:var(--card2)}
       <button class="modal-close" onclick="closeModal('modal-edit-tx')"><i class="ti ti-x"></i></button>
     </div>
     <input type="hidden" id="edit-tx-idx">
-    <div class="form-group" style="margin-bottom:12px">
-      <label>الطرف (ابحث بالاسم — الحساب يتغير تلقائياً)</label>
-      <input type="text" id="edit-tx-name" list="master-datalist" autocomplete="off"
-        placeholder="اكتب اسم المورد أو العميل..."
-        oninput="onTxNameInput(this.value)">
-      <div style="font-size:10px;color:var(--text3);margin-top:4px" id="edit-tx-entity-hint"></div>
+    <div class="form-group" style="margin-bottom:12px" id="edit-tx-name-slot">
+      <label>الطرف (ابحث من البيانات الموحدة — الحساب يتغير تلقائياً)</label>
     </div>
     <div class="form-group" style="margin-bottom:12px">
-      <label>الحساب (يتحدد تلقائياً عند اختيار الطرف)</label>
+      <label>الحساب (يتحدد تلقائياً عند اختيار الطرف، أو اختر يدوياً)</label>
       <select id="edit-tx-acc" onchange="onTxAccChange(this.value)"></select>
     </div>
     <div class="form-group" style="margin-bottom:12px">
@@ -1031,6 +1075,7 @@ select option{background:var(--card2)}
       <div class="form-group">
         <label>المبلغ</label>
         <input type="number" id="edit-tx-amount" step="0.01">
+
       </div>
     </div>
     <div class="modal-footer">
@@ -1050,7 +1095,7 @@ let MASTER_DATA = []; // موردين + عملاء + مصروفات للـ datal
 let reviewData = [];
 let exportLines = [];
 let _accounts = [], _suppliers = [], _customers = [], _expenses = [], _locations = [], _master = [];
-let _journals = [], _jrnSelected = new Set(), _jrnEditingLine = null;
+let _journals = [], _jrnSelected = new Set(), _jrnEditingJno = null, _jrnDeletedLines = new Set();
 let _openDays = new Set();
 const PAGE_ICONS = {
   dashboard:'ti-layout-dashboard', accounts:'ti-binary-tree-2', suppliers:'ti-building-warehouse',
@@ -1149,14 +1194,47 @@ async function loadDashboard() {
     document.getElementById('s-custs').textContent = dash.stats.customers;
     document.getElementById('s-exps').textContent = dash.stats.expenses;
 
-    const net = dash.total_credit - dash.total_debit;
-    document.getElementById('dash-credit').textContent = fmtShort(dash.total_credit) + ' ر.س';
-    document.getElementById('dash-debit').textContent = fmtShort(dash.total_debit) + ' ر.س';
+    const net = dash.net_cash_flow;
+    document.getElementById('dash-credit').textContent = fmtShort(dash.total_inflow) + ' ر.س';
+    document.getElementById('dash-debit').textContent = fmtShort(dash.total_outflow) + ' ر.س';
     document.getElementById('dash-net').textContent = (net >= 0 ? '+' : '') + fmtShort(net) + ' ر.س';
     document.getElementById('dash-net').style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
 
     // Cash Flow Chart
     renderCashFlowChart(cf);
+
+    // Bank Balances
+    const bbList = document.getElementById('bank-balances-list');
+    if (!dash.bank_balances || !dash.bank_balances.length) {
+      bbList.innerHTML = '<div class="text-muted text-sm" style="padding:20px 0;text-align:center">لا توجد حركات بنكية مرحّلة بعد</div>';
+    } else {
+      bbList.innerHTML = dash.bank_balances.map(b => `<div class="bank-bal-row">
+        <div class="bank-bal-name"><i class="ti ti-building-bank text-muted"></i>${b.bank}</div>
+        <div class="bank-bal-amt ${b.balance >= 0 ? 'text-green' : 'text-red'}">${fmt(b.balance)} ر.س</div>
+      </div>`).join('');
+    }
+
+    // Top Expenses
+    const teList = document.getElementById('top-expenses-list');
+    if (!dash.top_expenses || !dash.top_expenses.length) {
+      teList.innerHTML = '<div class="text-muted text-sm" style="padding:20px 0;text-align:center">لا توجد بيانات مصروفات بعد</div>';
+    } else {
+      const maxExp = Math.max(...dash.top_expenses.map(e => e.total), 1);
+      teList.innerHTML = dash.top_expenses.map(e => `<div class="top-exp-row">
+        <div class="top-exp-name" title="${e.name}">${e.name}</div>
+        <div class="top-exp-bar-track"><div class="top-exp-bar-fill" style="width:${Math.round(e.total / maxExp * 100)}%"></div></div>
+        <div class="top-exp-val">${fmtShort(e.total)}</div>
+      </div>`).join('');
+    }
+
+    // Status breakdown pills
+    const sc = dash.status_counts || {};
+    const approved = sc['معتمد'] || 0;
+    const draft = sc['مسودة'] || 0;
+    document.getElementById('status-pill-row').innerHTML = `
+      <div class="status-pill"><div class="num text-green">${approved}</div><div class="lbl">قيود معتمدة</div></div>
+      <div class="status-pill"><div class="num text-amber">${draft}</div><div class="lbl">قيود مسودة</div></div>
+    `;
 
     // Recent Journals
     const tbody = document.getElementById('dash-recent');
@@ -1209,11 +1287,76 @@ async function loadAccountOptions(force = false) {
   LOCATION_OPTIONS = lo;
   MASTER_DATA = md;
   // populate all account selects
-  ['sup-acc', 'cust-acc', 'exp-acc', 'bank-acc', 'edit-sup-acc', 'edit-cust-acc', 'edit-exp-acc', 'edit-tx-acc'].forEach(id => {
+  ['sup-acc', 'cust-acc', 'exp-acc', 'bank-acc', 'edit-sup-acc', 'edit-cust-acc', 'edit-exp-acc'].forEach(id => {
     const sel = document.getElementById(id);
     if (sel) sel.innerHTML = ACCOUNT_OPTIONS.map(o => `<option value="${o}">${o}</option>`).join('');
   });
 }
+
+/* ═══════════════════════════════════════
+   SEARCHABLE ENTITY DROPDOWN (الطرف — من البيانات الموحدة)
+   ينشئ مكوّن بحث-واختيار يعرض الاسم في النظام، ويُحدّث الحساب
+   المرتبط تلقائياً عبر onPick(item) عند الاختيار.
+════════════════════════════════════════ */
+let _sddActiveId = null;
+
+function sddHTML(id, currentValue, placeholder) {
+  return `<div class="sdd" id="${id}-wrap">
+    <input type="text" class="sdd-input" id="${id}" autocomplete="off" placeholder="${placeholder || 'ابحث...'}"
+      value="${(currentValue || '').replace(/"/g, '&quot;')}"
+      oninput="sddFilter('${id}')" onfocus="sddOpen('${id}')">
+    <div class="sdd-list" id="${id}-list"></div>
+  </div>`;
+}
+
+function sddRenderList(id, items) {
+  const list = document.getElementById(`${id}-list`);
+  if (!list) return;
+  if (!items.length) {
+    list.innerHTML = '<div class="sdd-empty">لا توجد نتائج — سيُستخدم النص كما هو</div>';
+    return;
+  }
+  list.innerHTML = items.slice(0, 30).map((it, i) =>
+    `<div class="sdd-item" data-i="${i}" onclick="sddPick('${id}', ${i})">
+      <span>${it.sys}</span><span class="sdd-acc">${it.acc || ''}</span>
+    </div>`
+  ).join('');
+  list._items = items;
+}
+
+function sddOpen(id) {
+  _sddActiveId = id;
+  sddFilter(id);
+  document.getElementById(`${id}-list`)?.classList.add('open');
+}
+
+function sddFilter(id) {
+  const input = document.getElementById(id);
+  const q = (input?.value || '').toLowerCase().trim();
+  const items = MASTER_DATA.filter(m => !q || m.sys.toLowerCase().includes(q) || (m.bank || '').toLowerCase().includes(q));
+  sddRenderList(id, items);
+  document.getElementById(`${id}-list`)?.classList.add('open');
+}
+
+function sddPick(id, i) {
+  const list = document.getElementById(`${id}-list`);
+  const item = list._items[i];
+  const input = document.getElementById(id);
+  input.value = item.sys;
+  input.dataset.acc = item.acc || '';
+  input.dataset.type = item.type || '';
+  list.classList.remove('open');
+  const handler = input.dataset.onpick;
+  if (handler && window[handler]) window[handler](item, id);
+}
+
+document.addEventListener('click', (e) => {
+  if (_sddActiveId && !e.target.closest(`#${_sddActiveId}-wrap`)) {
+    document.getElementById(`${_sddActiveId}-list`)?.classList.remove('open');
+    _sddActiveId = null;
+  }
+});
+
 
 /* ═══════════════════════════════════════
    ACCOUNTS
@@ -1763,36 +1906,33 @@ function approveAll() {
   showNotif('تم اعتماد كل العمليات الموثوقة');
 }
 
-function buildMasterDatalist() {
-  const dl = document.getElementById('master-datalist');
-  if (!dl) return;
-  dl.innerHTML = MASTER_DATA.map(x => `<option value="${x.sys}" data-acc="${x.acc}" data-type="${x.type}">${x.sys} (${x.type})</option>`).join('');
-}
-
-function onTxNameInput(val) {
-  // ابحث في MASTER_DATA عن تطابق
-  const match = MASTER_DATA.find(x => x.sys.toLowerCase() === val.toLowerCase());
-  if (match) {
-    // حدّث الحساب تلقائياً
+function onEntityPicked(item, inputId) {
+  // عند اختيار طرف من قائمة البحث: حدّث الحساب المرتبط تلقائياً
+  if (inputId === 'edit-tx-name') {
     const sel = document.getElementById('edit-tx-acc');
-    if (sel) {
+    if (sel && item.acc) {
       for (let i = 0; i < sel.options.length; i++) {
-        if (sel.options[i].value === match.acc) { sel.selectedIndex = i; break; }
+        if (sel.options[i].value === item.acc) { sel.selectedIndex = i; break; }
       }
     }
     const hint = document.getElementById('edit-tx-entity-hint');
-    if (hint) hint.textContent = `✓ ${match.type} — حساب: ${match.acc}`;
-    // حدّث الشرح تلقائياً
+    if (hint) hint.textContent = `✓ ${item.type} — حساب: ${item.acc}`;
     const memoEl = document.getElementById('edit-tx-memo');
     if (memoEl && !memoEl.dataset.userEdited) {
       const idx = parseInt(document.getElementById('edit-tx-idx').value);
       const t = reviewData.find(x => x.idx === idx);
-      const et = match.type === 'مورد' ? 'supplier' : match.type === 'عميل' ? 'customer' : 'expense';
-      memoEl.value = buildMemo(et, val, t ? t.bank_desc : '');
+      const et = item.type === 'مورد' ? 'supplier' : item.type === 'عميل' ? 'customer' : 'expense';
+      memoEl.value = buildMemo(et, item.sys, t ? t.bank_desc : '');
     }
-  } else {
-    const hint = document.getElementById('edit-tx-entity-hint');
-    if (hint) hint.textContent = '';
+  }
+  if (inputId && inputId.startsWith('jln-ent-')) {
+    const lineId = inputId.replace('jln-ent-', '');
+    const sel = document.getElementById(`jln-acc-${lineId}`);
+    if (sel && item.acc) {
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === item.acc) { sel.selectedIndex = i; break; }
+      }
+    }
   }
 }
 
@@ -1806,9 +1946,12 @@ function openTxEdit(idx) {
   const t = reviewData.find(x => x.idx === idx); if (!t) return;
   // تأكد من تحميل بيانات الماستر
   if (!ACCOUNT_OPTIONS.length) { loadAccountOptions().then(() => openTxEdit(idx)); return; }
-  buildMasterDatalist();
   document.getElementById('edit-tx-idx').value = idx;
-  document.getElementById('edit-tx-name').value = t.sys_name || '';
+  // بناء حقل البحث عن الطرف
+  const slot = document.getElementById('edit-tx-name-slot');
+  slot.innerHTML = `<label>الطرف (ابحث من البيانات الموحدة — الحساب يتغير تلقائياً)</label>${sddHTML('edit-tx-name', t.sys_name || '', 'اكتب اسم المورد أو العميل أو المصروف...')}<div style="font-size:10px;color:var(--text3);margin-top:4px" id="edit-tx-entity-hint"></div>`;
+  document.getElementById('edit-tx-name').dataset.onpick = 'onEntityPicked';
+  document.getElementById('edit-tx-name').dataset.acc = t.acc_link || '';
   // الشرح
   const memoEl = document.getElementById('edit-tx-memo');
   memoEl.value = buildMemo(t.entity_type, t.sys_name, t.bank_desc);
@@ -1817,9 +1960,9 @@ function openTxEdit(idx) {
   // الحساب
   const sel = document.getElementById('edit-tx-acc');
   sel.innerHTML = ACCOUNT_OPTIONS.map(o => `<option value="${o}" ${o === t.acc_link ? 'selected' : ''}>${o}</option>`).join('');
-  // الموقع — الافتراضي = أول موقع رئيسي
+  // الموقع
   const locSel = document.getElementById('edit-tx-location');
-  const defaultLoc = t.location || LOCATION_OPTIONS.find(l => l) || '';
+  const defaultLoc = t.location || 'Management';
   locSel.innerHTML = LOCATION_OPTIONS.map(l => `<option value="${l}" ${l === defaultLoc ? 'selected' : ''}>${l}</option>`).join('');
   // المبلغ
   document.getElementById('edit-tx-amount').value = t.amount;
@@ -1932,6 +2075,7 @@ function renderJournalCard(je) {
   const totalC = je.lines.reduce((s, l) => s + (l.credit || 0), 0);
   const balanced = Math.abs(totalD - totalC) < 0.01;
   const isSel = _jrnSelected.has(je.jno);
+  const isEditing = _jrnEditingJno === je.jno;
   return `<div class="j-card">
     <div class="j-card-hdr">
       <input type="checkbox" class="jrn-row-chk" data-jno="${je.jno}" ${isSel ? 'checked' : ''} onchange="toggleJrnSelect('${je.jno}',this.checked)">
@@ -1945,6 +2089,10 @@ function renderJournalCard(je) {
         ${first.status === 'معتمد'
           ? `<button class="btn sm ghost" onclick="setJournalStatus('${je.jno}','مسودة')"><i class="ti ti-edit"></i>مسودة</button>`
           : `<button class="btn sm success" onclick="setJournalStatus('${je.jno}','معتمد')"><i class="ti ti-check"></i>اعتماد</button>`}
+        ${isEditing
+          ? `<button class="btn sm success" onclick="saveJournalEntry('${je.jno}')"><i class="ti ti-check"></i>حفظ القيد</button>
+             <button class="btn sm ghost" onclick="_jrnEditingJno=null;renderJournals()"><i class="ti ti-x"></i>إلغاء</button>`
+          : `<button class="btn sm ghost" onclick="_jrnEditingJno='${je.jno}';renderJournals()"><i class="ti ti-edit"></i>تعديل القيد</button>`}
         <button class="btn sm danger icon-only" onclick="delJournal('${je.jno}')"><i class="ti ti-trash"></i></button>
       </div>
     </div>
@@ -1954,40 +2102,39 @@ function renderJournalCard(je) {
           <th style="text-align:right;padding:3px 8px">الحساب</th>
           <th style="text-align:right;padding:3px 8px">الطرف</th>
           <th style="text-align:right;padding:3px 8px">الموقع</th>
-          <th style="text-align:right;padding:3px 8px">الشرح</th>
+          <th style="text-align:right;padding:3px 8px">البيان</th>
           <th style="text-align:left;padding:3px 8px;width:90px">مدين</th>
           <th style="text-align:left;padding:3px 8px;width:90px">دائن</th>
-          <th style="width:50px;padding:3px 8px"></th>
+          ${isEditing ? '<th style="width:36px;padding:3px 8px"></th>' : ''}
         </tr></thead>
-        <tbody>${je.lines.map(l => renderJournalLineRow(l)).join('')}</tbody>
+        <tbody>${je.lines.map(l => renderJournalLineRow(l, isEditing)).join('')}</tbody>
       </table>
     </div>
   </div>`;
 }
 
-function renderJournalLineRow(l) {
-  if (_jrnEditingLine === l.id) {
+function renderJournalLineRow(l, isEditing) {
+  if (isEditing) {
     const ao = ACCOUNT_OPTIONS.map(a => `<option value="${a}" ${a.split(' - ')[0] === l.account_code ? 'selected' : ''}>${a}</option>`).join('');
     const lo = LOCATION_OPTIONS.map(loc => `<option value="${loc}" ${loc === l.location ? 'selected' : ''}>${loc}</option>`).join('');
-    return `<tr style="background:var(--card2)">
+    const entId = `jln-ent-${l.id}`;
+    return `<tr style="background:var(--card2)" data-line-id="${l.id}">
       <td style="padding:3px">
-        <select id="jln-acc-${l.id}" style="width:100%" onchange="onJlnAccChange(${l.id},this.value)">${ao}</select>
+        <select id="jln-acc-${l.id}" style="width:100%">${ao}</select>
       </td>
-      <td style="padding:3px">
-        <input id="jln-ent-${l.id}" type="text" value="${l.entity_name || ''}" list="master-datalist" style="width:100%"
-          oninput="onJlnEntInput(${l.id},this.value)" placeholder="الطرف...">
+      <td style="padding:3px;min-width:160px">
+        ${sddHTML(entId, l.entity_name || '', 'الطرف...')}
       </td>
       <td style="padding:3px">
         <select id="jln-loc-${l.id}" style="width:100%">${lo}</select>
       </td>
       <td style="padding:3px">
-        <input id="jln-memo-${l.id}" type="text" value="${(l.memo||'').replace(/"/g,'&quot;')}" style="width:100%" placeholder="الشرح">
+        <input id="jln-memo-${l.id}" type="text" value="${(l.memo||'').replace(/"/g,'&quot;')}" style="width:100%" placeholder="البيان">
       </td>
       <td style="padding:3px"><input id="jln-deb-${l.id}" type="number" step="0.01" value="${l.debit || 0}" style="width:80px"></td>
       <td style="padding:3px"><input id="jln-cre-${l.id}" type="number" step="0.01" value="${l.credit || 0}" style="width:80px"></td>
-      <td style="padding:3px;display:flex;gap:4px">
-        <button class="btn sm success" onclick="saveJournalLine(${l.id})"><i class="ti ti-check"></i></button>
-        <button class="btn sm ghost" onclick="_jrnEditingLine=null;renderJournals()"><i class="ti ti-x"></i></button>
+      <td style="padding:3px">
+        <button class="btn sm danger icon-only" onclick="deleteJournalLineRow(${l.id})" title="حذف السطر"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
   }
@@ -1995,44 +2142,60 @@ function renderJournalLineRow(l) {
     <td style="padding:3px 8px"><span class="tbl-code">${l.account_code}</span> <span class="tbl-muted">${l.account_name}</span></td>
     <td style="padding:3px 8px">${l.entity_name || ''}</td>
     <td style="padding:3px 8px">${l.location || ''}</td>
-    <td style="padding:3px 8px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${l.memo||''}">${l.memo || ''}</td>
+    <td style="padding:3px 8px;max-width:260px;white-space:normal;word-break:break-word" title="${(l.memo||'').replace(/"/g,'&quot;')}">${l.memo || ''}</td>
     <td style="padding:3px 8px" class="text-red mono">${l.debit ? fmt(l.debit) : ''}</td>
     <td style="padding:3px 8px" class="text-green mono">${l.credit ? fmt(l.credit) : ''}</td>
-    <td style="padding:3px 8px"><button class="btn sm ghost icon-only" onclick="_jrnEditingLine=${l.id};renderJournals()"><i class="ti ti-edit"></i></button></td>
   </tr>`;
 }
 
-function onJlnEntInput(lineId, val) {
-  const match = MASTER_DATA.find(x => x.sys.toLowerCase() === val.toLowerCase());
-  if (match) {
-    const sel = document.getElementById(`jln-acc-${lineId}`);
-    if (sel) {
-      for (let i = 0; i < sel.options.length; i++) {
-        if (sel.options[i].value === match.acc) { sel.selectedIndex = i; break; }
-      }
-    }
-  }
+function deleteJournalLineRow(lineId) {
+  const row = document.querySelector(`tr[data-line-id="${lineId}"]`);
+  if (row) row.remove();
+  if (!_jrnDeletedLines) _jrnDeletedLines = new Set();
+  _jrnDeletedLines.add(lineId);
 }
-function onJlnAccChange(lineId, val) { /* hook for future use */ }
 
-async function saveJournalLine(id) {
-  const accVal = document.getElementById(`jln-acc-${id}`).value;
-  const accCode = accVal.split(' - ')[0];
-  const accName = accVal.includes(' - ') ? accVal.split(' - ').slice(1).join(' - ') : accVal;
-  const memoEl = document.getElementById(`jln-memo-${id}`);
-  await fetch(`/api/journals/line/${id}`, {
+async function saveJournalEntry(jno) {
+  const rows = document.querySelectorAll(`tr[data-line-id]`);
+  const updates = [];
+  rows.forEach(row => {
+    const lineId = row.dataset.lineId;
+    const accSel = document.getElementById(`jln-acc-${lineId}`);
+    if (!accSel) return; // ليس من هذا القيد أو غير في وضع التعديل
+    const accVal = accSel.value;
+    const accCode = accVal.split(' - ')[0];
+    const accName = accVal.includes(' - ') ? accVal.split(' - ').slice(1).join(' - ') : accVal;
+    const entInput = document.getElementById(`jln-ent-${lineId}`);
+    const memoEl = document.getElementById(`jln-memo-${lineId}`);
+    const locEl = document.getElementById(`jln-loc-${lineId}`);
+    updates.push({
+      id: lineId,
+      account_code: accCode,
+      account_name: accName,
+      entity_name: entInput ? entInput.value : '',
+      location: locEl ? locEl.value : '',
+      memo: memoEl ? memoEl.value : '',
+      debit: parseFloat(document.getElementById(`jln-deb-${lineId}`).value) || 0,
+      credit: parseFloat(document.getElementById(`jln-cre-${lineId}`).value) || 0,
+    });
+  });
+  await Promise.all(updates.map(u => fetch(`/api/journals/line/${u.id}`, {
     method: 'PATCH', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      account_code: accCode, account_name: accName,
-      entity_name: document.getElementById(`jln-ent-${id}`).value,
-      location: document.getElementById(`jln-loc-${id}`).value,
-      memo: memoEl ? memoEl.value : '',
-      debit: parseFloat(document.getElementById(`jln-deb-${id}`).value) || 0,
-      credit: parseFloat(document.getElementById(`jln-cre-${id}`).value) || 0,
+      account_code: u.account_code, account_name: u.account_name,
+      entity_name: u.entity_name, location: u.location, memo: u.memo,
+      debit: u.debit, credit: u.credit,
     })
-  });
-  _jrnEditingLine = null; renderJournals(); showNotif('تم تحديث السطر');
+  })));
+  if (_jrnDeletedLines && _jrnDeletedLines.size) {
+    await Promise.all(Array.from(_jrnDeletedLines).map(id => fetch(`/api/journals/line/${id}`, { method: 'DELETE' })));
+    _jrnDeletedLines.clear();
+  }
+  _jrnEditingJno = null;
+  renderJournals();
+  showNotif('تم حفظ تعديلات القيد بالكامل');
 }
+
 async function setJournalStatus(jno, status) {
   await fetch(`/api/journals/${jno}/status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
   renderJournals(); showNotif(status === 'معتمد' ? 'تم الاعتماد' : 'تحويل لمسودة');
