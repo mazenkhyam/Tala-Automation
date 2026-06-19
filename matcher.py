@@ -176,10 +176,9 @@ def build_journal_lines(tx: dict, bank_account: str, match: dict) -> list:
         bank_total = abs(amount)
         vendor_net = round(bank_total - fee_amount - fee_vat, 2)
         lines.append(_line(date, memo, entity, location, acc_code, acc_name, vendor_net, 0, acc_link, 0, 0))
-        if fee_amount > 0:
-            lines.append(_line(date, f"BC- {memo}", entity, location, fee_code, fee_name, fee_amount, 0, '', 0, 0))
-        if fee_vat > 0:
-            lines.append(_line(date, f"VAT- {memo}", entity, location, vat_code, vat_name, fee_vat, 0, '', 0, fee_vat))
+        if fee_amount > 0 or fee_vat > 0:
+            fee_total = round(fee_amount + fee_vat, 2)
+            lines.append(_line(date, f"BC- {memo}", entity, location, fee_code, fee_name, fee_total, 0, '', 0, fee_vat))
         lines.append(_line(date, memo, entity, location, bank_code, bank_name_str, 0, bank_total, bank_account, 0, 0))
     return lines
 
