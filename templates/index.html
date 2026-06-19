@@ -458,15 +458,14 @@ select option{background:var(--card2)}
     </div>
   </div>
 
-  <!-- Cash Flow + Quick Stats -->
+  <!-- Cash Flow + Bank Balances -->
   <div class="grid2" style="margin-bottom:16px">
     <!-- Cash Flow Card -->
     <div class="card" style="margin-bottom:0">
       <div class="card-hdr">
-        <div class="card-title"><i class="ti ti-chart-bar"></i>التدفق النقدي — آخر 6 أشهر</div>
+        <div class="card-title"><i class="ti ti-chart-bar"></i>التدفق النقدي اليومي</div>
         <div class="flex gap6">
-          <span class="badge green"><i class="ti ti-arrow-down"></i>إيداعات</span>
-          <span class="badge red"><i class="ti ti-arrow-up"></i>مسحوبات</span>
+          <input type="month" id="cf-month-picker" onchange="loadCashflowMonth(this.value)" style="width:150px">
         </div>
       </div>
       <div id="cf-chart-wrap">
@@ -504,7 +503,7 @@ select option{background:var(--card2)}
     </div>
   </div>
 
-  <!-- Top Expenses + Quick Actions + Status -->
+  <!-- Top Expenses + Supplier Payments (filtered by selected month) -->
   <div class="grid2" style="margin-bottom:16px">
     <div class="card" style="margin-bottom:0">
       <div class="card-hdr">
@@ -517,20 +516,25 @@ select option{background:var(--card2)}
 
     <div class="card" style="margin-bottom:0;display:flex;flex-direction:column">
       <div class="card-hdr">
-        <div class="card-title"><i class="ti ti-zap"></i>إجراءات سريعة</div>
+        <div class="card-title"><i class="ti ti-building-store"></i>سدادات الموردين خلال الشهر</div>
+        <span class="text-xs text-muted" id="cf-month-label"></span>
       </div>
-      <div style="display:flex;flex-direction:column;gap:10px;flex:1">
-        <button class="btn primary lg" onclick="nav('upload')" style="justify-content:center;width:100%">
-          <i class="ti ti-file-upload"></i> رفع كشف بنك جديد
-        </button>
-        <button class="btn gold lg" onclick="nav('review')" style="justify-content:center;width:100%">
-          <i class="ti ti-table-check"></i> مراجعة القيود الحالية
-        </button>
-        <button class="btn lg" onclick="nav('journals')" style="justify-content:center;width:100%">
-          <i class="ti ti-history"></i> سجل القيود المحفوظة
-        </button>
+      <div id="supplier-payments-list" style="flex:1;max-height:280px;overflow-y:auto">
+        <div class="text-muted text-sm" style="padding:20px 0;text-align:center">جاري التحميل...</div>
       </div>
       <div class="status-pill-row" id="status-pill-row"></div>
+    </div>
+  </div>
+
+  <!-- Category Totals (كهرباء / اتصالات / حكومي) -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-hdr">
+      <div class="card-title"><i class="ti ti-category"></i>السدادات حسب التصنيف — الشهر المحدد</div>
+    </div>
+    <div class="kpi-grid cols3" id="category-totals-grid">
+      <div class="kpi blue"><div class="kpi-icon"><i class="ti ti-bolt"></i></div><div class="kpi-lbl">كهرباء</div><div class="kpi-val" id="cat-electricity">—</div></div>
+      <div class="kpi purple"><div class="kpi-icon"><i class="ti ti-phone"></i></div><div class="kpi-lbl">اتصالات</div><div class="kpi-val" id="cat-telecom">—</div></div>
+      <div class="kpi gold"><div class="kpi-icon"><i class="ti ti-building-government"></i></div><div class="kpi-lbl">حكومي</div><div class="kpi-val" id="cat-gov">—</div></div>
     </div>
   </div>
 
@@ -1258,20 +1262,11 @@ const typeColors = { 'أصول': 'blue', 'خصوم': 'red', 'إيرادات': 'g
 ════════════════════════════════════════ */
 async function loadDashboard() {
   try {
-    const [dash, cf] = await Promise.all([fetch('/api/dashboard').then(r => r.json()), fetch('/api/dashboard/cashflow').then(r => r.json()).catch(() => [])]);
+    const dash = await fetch('/api/dashboard').then(r => r.json());
     document.getElementById('s-accs').textContent = dash.stats.accounts;
     document.getElementById('s-supps').textContent = dash.stats.suppliers;
     document.getElementById('s-custs').textContent = dash.stats.customers;
     document.getElementById('s-exps').textContent = dash.stats.expenses;
-
-    const net = dash.net_cash_flow;
-    document.getElementById('dash-credit').textContent = fmtShort(dash.total_inflow) + ' ر.س';
-    document.getElementById('dash-debit').textContent = fmtShort(dash.total_outflow) + ' ر.س';
-    document.getElementById('dash-net').textContent = (net >= 0 ? '+' : '') + fmtShort(net) + ' ر.س';
-    document.getElementById('dash-net').style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
-
-    // Cash Flow Chart
-    renderCashFlowChart(cf);
 
     // Bank Balances
     const bbList = document.getElementById('bank-balances-list');
@@ -1319,24 +1314,69 @@ async function loadDashboard() {
         <td class="text-green mono">${j.credit ? fmt(j.credit) : '—'}</td>
       </tr>`).join('');
     }
+
+    // شهر التدفق النقدي الافتراضي = الشهر الحالي
+    const picker = document.getElementById('cf-month-picker');
+    if (picker && !picker.value) {
+      const now = new Date();
+      picker.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    }
+    loadCashflowMonth(picker ? picker.value : '');
   } catch (e) { console.error(e); }
 }
 
-function renderCashFlowChart(data) {
+async function loadCashflowMonth(month) {
+  try {
+    const url = month ? `/api/dashboard/cashflow?month=${month}` : '/api/dashboard/cashflow';
+    const cf = await fetch(url).then(r => r.json());
+
+    const net = cf.total_inflow - cf.total_outflow;
+    document.getElementById('dash-credit').textContent = fmtShort(cf.total_inflow) + ' ر.س';
+    document.getElementById('dash-debit').textContent = fmtShort(cf.total_outflow) + ' ر.س';
+    document.getElementById('dash-net').textContent = (net >= 0 ? '+' : '') + fmtShort(net) + ' ر.س';
+    document.getElementById('dash-net').style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
+    document.getElementById('cf-month-label').textContent = cf.month || '';
+
+    renderCashFlowChart(cf.daily || []);
+
+    // Supplier Payments List
+    const spList = document.getElementById('supplier-payments-list');
+    if (!cf.suppliers || !cf.suppliers.length) {
+      spList.innerHTML = '<div class="text-muted text-sm" style="padding:20px 0;text-align:center">لا توجد سدادات خلال هذا الشهر</div>';
+    } else {
+      spList.innerHTML = cf.suppliers.map(s => `<div class="bank-bal-row">
+        <div class="bank-bal-name">
+          <i class="ti ti-building-store text-muted"></i>${s.entity_name}
+          ${s.invoice_no ? `<span class="badge muted text-xs">فاتورة ${s.invoice_no}</span>` : ''}
+          <span class="text-xs text-muted">(${s.count} عملية)</span>
+        </div>
+        <div class="bank-bal-amt text-red">${fmt(s.total)} ر.س</div>
+      </div>`).join('');
+    }
+
+    // Category Totals
+    const cat = cf.category_totals || {};
+    document.getElementById('cat-electricity').textContent = fmtShort(cat['كهرباء'] || 0) + ' ر.س';
+    document.getElementById('cat-telecom').textContent = fmtShort(cat['اتصالات'] || 0) + ' ر.س';
+    document.getElementById('cat-gov').textContent = fmtShort(cat['حكومي'] || 0) + ' ر.س';
+  } catch (e) { console.error(e); }
+}
+
+function renderCashFlowChart(daily) {
   const wrap = document.getElementById('cf-chart');
-  if (!data || !data.length) {
-    wrap.innerHTML = '<div class="text-muted text-sm" style="padding:20px 0">لا توجد بيانات كافية للرسم البياني</div>';
+  if (!daily || !daily.length) {
+    wrap.innerHTML = '<div class="text-muted text-sm" style="padding:20px 0">لا توجد بيانات كافية للرسم البياني لهذا الشهر</div>';
     return;
   }
-  const maxVal = Math.max(...data.map(d => Math.max(d.inflow || 0, d.outflow || 0)), 1);
-  wrap.innerHTML = data.map(d => {
+  const maxVal = Math.max(...daily.map(d => Math.max(d.inflow || 0, d.outflow || 0)), 1);
+  wrap.innerHTML = daily.map(d => {
     const inH = Math.round(((d.inflow || 0) / maxVal) * 75);
     const outH = Math.round(((d.outflow || 0) / maxVal) * 75);
-    const lbl = (d.month || '').substring(5); // MM
+    const lbl = (d.day || '').slice(-2); // DD
     return `<div class="cf-bar-group">
       <div class="cf-bars">
-        <div class="cf-bar inflow" style="height:${inH}px" title="إيرادات: ${fmt(d.inflow)} ر.س"></div>
-        <div class="cf-bar outflow" style="height:${outH}px" title="مدفوعات: ${fmt(d.outflow)} ر.س"></div>
+        <div class="cf-bar inflow" style="height:${inH}px" title="إيداعات يوم ${d.day}: ${fmt(d.inflow)} ر.س"></div>
+        <div class="cf-bar outflow" style="height:${outH}px" title="مسحوبات يوم ${d.day}: ${fmt(d.outflow)} ر.س"></div>
       </div>
       <div class="cf-lbl">${lbl}</div>
     </div>`;
@@ -1369,35 +1409,56 @@ async function loadAccountOptions(force = false) {
    المرتبط تلقائياً عبر onPick(item) عند الاختيار.
 ════════════════════════════════════════ */
 let _sddActiveId = null;
+let _sddListEl = null; // عنصر القائمة المنبثقة الوحيد، يُعاد استخدامه ويُنقل لـ body مباشرة
 
 function sddHTML(id, currentValue, placeholder) {
   return `<div class="sdd" id="${id}-wrap">
     <input type="text" class="sdd-input" id="${id}" autocomplete="off" placeholder="${placeholder || 'ابحث...'}"
       value="${(currentValue || '').replace(/"/g, '&quot;')}"
       oninput="sddFilter('${id}')" onfocus="sddOpen('${id}')">
-    <div class="sdd-list" id="${id}-list"></div>
   </div>`;
 }
 
+function _sddEnsureListEl() {
+  if (!_sddListEl) {
+    _sddListEl = document.createElement('div');
+    _sddListEl.className = 'sdd-list';
+    _sddListEl.style.position = 'fixed';
+    _sddListEl.style.zIndex = '9999';
+    document.body.appendChild(_sddListEl);
+  }
+  return _sddListEl;
+}
+
 function sddRenderList(id, items) {
-  const list = document.getElementById(`${id}-list`);
-  if (!list) return;
+  const list = _sddEnsureListEl();
   if (!items.length) {
     list.innerHTML = '<div class="sdd-empty">لا توجد نتائج — سيُستخدم النص كما هو</div>';
-    return;
+  } else {
+    list.innerHTML = items.slice(0, 30).map((it, i) =>
+      `<div class="sdd-item" data-i="${i}" onclick="sddPick('${id}', ${i})">
+        <span>${it.sys}</span><span class="sdd-acc">${it.acc || ''}</span>
+      </div>`
+    ).join('');
   }
-  list.innerHTML = items.slice(0, 30).map((it, i) =>
-    `<div class="sdd-item" data-i="${i}" onclick="sddPick('${id}', ${i})">
-      <span>${it.sys}</span><span class="sdd-acc">${it.acc || ''}</span>
-    </div>`
-  ).join('');
   list._items = items;
+}
+
+function _sddPositionList(id) {
+  const input = document.getElementById(id);
+  const list = _sddEnsureListEl();
+  if (!input) return;
+  const r = input.getBoundingClientRect();
+  list.style.left = r.left + 'px';
+  list.style.top = (r.bottom + 2) + 'px';
+  list.style.width = r.width + 'px';
 }
 
 function sddOpen(id) {
   _sddActiveId = id;
   sddFilter(id);
-  document.getElementById(`${id}-list`)?.classList.add('open');
+  _sddPositionList(id);
+  _sddEnsureListEl().classList.add('open');
 }
 
 function sddFilter(id) {
@@ -1405,11 +1466,12 @@ function sddFilter(id) {
   const q = (input?.value || '').toLowerCase().trim();
   const items = MASTER_DATA.filter(m => !q || m.sys.toLowerCase().includes(q) || (m.bank || '').toLowerCase().includes(q));
   sddRenderList(id, items);
-  document.getElementById(`${id}-list`)?.classList.add('open');
+  _sddPositionList(id);
+  _sddEnsureListEl().classList.add('open');
 }
 
 function sddPick(id, i) {
-  const list = document.getElementById(`${id}-list`);
+  const list = _sddEnsureListEl();
   const item = list._items[i];
   const input = document.getElementById(id);
   input.value = item.sys;
@@ -1420,9 +1482,12 @@ function sddPick(id, i) {
   if (handler && window[handler]) window[handler](item, id);
 }
 
+window.addEventListener('scroll', () => { if (_sddActiveId) _sddPositionList(_sddActiveId); }, true);
+window.addEventListener('resize', () => { if (_sddActiveId) _sddPositionList(_sddActiveId); });
+
 document.addEventListener('click', (e) => {
-  if (_sddActiveId && !e.target.closest(`#${_sddActiveId}-wrap`)) {
-    document.getElementById(`${_sddActiveId}-list`)?.classList.remove('open');
+  if (_sddActiveId && !e.target.closest(`#${_sddActiveId}-wrap`) && !e.target.closest('.sdd-list')) {
+    _sddEnsureListEl().classList.remove('open');
     _sddActiveId = null;
   }
 });
