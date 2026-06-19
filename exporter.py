@@ -1,14 +1,15 @@
 """
 QuickBooks Journal Entry CSV Exporter — TALA v2
-صيغة QB: JournalNo, JournalDate, AccountName (= acc_code), Debits, Credits,
-          Description, Name, Location, TaxAmount, TaxName
+صيغة التصدير الجديدة (مطابقة لنموذج العميل):
+  Journal Date, Journal no., Account (= acc_code), Debits, Credits,
+  Description, Name, TAX, Location, Class
 """
 
 import pandas as pd
 from io import StringIO, BytesIO
 
-QB_COLUMNS = ['JournalNo','JournalDate','AccountName','Debits','Credits',
-               'Description','Name','Location','TaxAmount','TaxName']
+QB_COLUMNS = ['Journal Date', 'Journal no.', 'Account', 'Debits', 'Credits',
+              'Description', 'Name', 'TAX', 'Location', 'Class']
 
 
 def journals_to_qb_csv(journals_df: pd.DataFrame) -> bytes:
@@ -16,16 +17,16 @@ def journals_to_qb_csv(journals_df: pd.DataFrame) -> bytes:
     for _, r in journals_df.iterrows():
         tax_amt = float(r.get('tax_amount', 0) or 0)
         out_rows.append({
-            'JournalNo':   r.get('journal_no', ''),
-            'JournalDate': r.get('journal_date', ''),
-            'AccountName': r.get('account_code', ''),   # كود الحساب فقط
-            'Debits':      r.get('debit', 0) or '',
-            'Credits':     r.get('credit', 0) or '',
-            'Description': r.get('memo', ''),
-            'Name':        r.get('entity_name', ''),
-            'Location':    r.get('location', ''),
-            'TaxAmount':   tax_amt or '',
-            'TaxName':     'Bank Fee VAT' if tax_amt > 0 else '',
+            'Journal Date': r.get('journal_date', ''),
+            'Journal no.':  r.get('journal_no', ''),
+            'Account':      r.get('account_code', ''),   # كود الحساب فقط
+            'Debits':       r.get('debit', 0) or '',
+            'Credits':      r.get('credit', 0) or '',
+            'Description':  r.get('memo', ''),
+            'Name':         r.get('entity_name', ''),
+            'TAX':          tax_amt or '',
+            'Location':     r.get('location', ''),
+            'Class':        '',
         })
     df_out = pd.DataFrame(out_rows, columns=QB_COLUMNS)
     buf = StringIO()
