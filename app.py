@@ -1078,29 +1078,34 @@ def api_cashflow():
 
     invoice_re = re.compile(r'(?:رقم|Bill|Invoice|فاتورة)\s*[:#]?\s*([A-Za-z0-9\-/]+)', re.IGNORECASE)
 
+    # تصنيف خاص: كهرباء / اتصالات / حكومي (للعرض كوسم بجانب اسم المورد)
+    categories = {'كهرباء': ['ELECTRIC', 'كهرباء', 'SEC'],
+                  'اتصالات': ['STC', 'MOBILY', 'ZAIN', 'اتصالات'],
+                  'حكومي': ['GOSI', 'GOVERNMENT', 'MOL', 'حكوم', 'DIWAN', 'IQAMA']}
+
+    def _classify(entity_name, memos):
+        text = f"{entity_name} {memos or ''}".upper()
+        for cat, kws in categories.items():
+            if any(kw.upper() in text for kw in kws):
+                return cat
+        return ''
+
     suppliers = []
+    category_totals = {k: 0.0 for k in categories}
     for r in supplier_rows:
         memos = (r['memos'] or '')
         m = invoice_re.search(memos)
         invoice_no = m.group(1) if m else ''
+        cat = _classify(r['entity_name'], memos)
+        if cat:
+            category_totals[cat] += float(r['total'])
         suppliers.append({
             'entity_name': r['entity_name'],
             'total': float(r['total']),
             'count': r['cnt'],
             'invoice_no': invoice_no,
+            'category': cat,
         })
-
-    # تصنيف خاص: كهرباء / اتصالات / حكومي ضمن المصروفات (مطابقة بالاسم/البيان)
-    categories = {'كهرباء': ['ELECTRIC', 'كهرباء', 'SEC'],
-                  'اتصالات': ['STC', 'MOBILY', 'ZAIN', 'اتصالات'],
-                  'حكومي': ['GOSI', 'GOVERNMENT', 'MOL', 'حكوم', 'DIWAN', 'IQAMA']}
-    category_totals = {k: 0.0 for k in categories}
-    for r in supplier_rows:
-        text = f"{r['entity_name']} {r['memos'] or ''}".upper()
-        for cat, kws in categories.items():
-            if any(kw.upper() in text for kw in kws):
-                category_totals[cat] += float(r['total'])
-                break
 
     conn.close()
     return jsonify({
