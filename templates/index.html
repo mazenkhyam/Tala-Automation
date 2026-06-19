@@ -397,6 +397,7 @@ select option{background:var(--card2)}
   <div class="sb-item" data-page="customers"><i class="ti ti-users"></i>العملاء</div>
   <div class="sb-item" data-page="expenses"><i class="ti ti-receipt-2"></i>بنود المصروفات</div>
   <div class="sb-item" data-page="locations"><i class="ti ti-map-pin"></i>المواقع</div>
+  <div class="sb-item" data-page="banks"><i class="ti ti-building-bank"></i>البنوك</div>
   <div class="sb-item" data-page="master"><i class="ti ti-database-search"></i>البيانات الموحدة</div>
 
   <div class="sb-section">العمليات</div>
@@ -684,6 +685,26 @@ select option{background:var(--card2)}
   </div>
 </div>
 
+<!-- ════ BANKS ════ -->
+<div class="sc" id="sc-banks">
+  <div class="kpi-grid cols2" style="margin-bottom:16px">
+    <div class="kpi blue"><div class="kpi-icon"><i class="ti ti-building-bank"></i></div><div class="kpi-lbl">إجمالي البنوك</div><div class="kpi-val" id="bank-total">0</div></div>
+    <div class="kpi gold"><div class="kpi-icon"><i class="ti ti-link"></i></div><div class="kpi-lbl">مرتبطة بحسابات</div><div class="kpi-val" id="bank-linked">0</div></div>
+  </div>
+  <div class="card">
+    <div class="toolbar">
+      <button class="btn primary sm" onclick="fillBankAccOptions('bank-new-acc'); openModal('modal-add-bank')"><i class="ti ti-plus"></i>إضافة بنك</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <colgroup><col><col style="width:220px"><col style="width:160px"><col style="width:120px"></colgroup>
+        <thead><tr><th>اسم البنك</th><th>الحساب المرتبط</th><th>نوع القراءة</th><th>إجراءات</th></tr></thead>
+        <tbody id="bank-table"><tr><td colspan="4"><div class="empty"><i class="ti ti-loader"></i><p>جاري التحميل...</p></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- ════ MASTER DATA ════ -->
 <div class="sc" id="sc-master">
   <div class="kpi-grid cols4" style="margin-bottom:16px">
@@ -721,10 +742,7 @@ select option{background:var(--card2)}
     <div class="form-grid g3">
       <div class="form-group">
         <label>البنك</label>
-        <select id="bank-select">
-          <option value="AlAhli">الأهلي السعودي (AlAhli)</option>
-          <option value="Alinma">بنك الإنماء (Alinma)</option>
-          <option value="Riyad">بنك الرياض (Riyad)</option>
+        <select id="bank-select" onchange="onBankSelectChange(this.value)">
           <option value="Auto">كشف تلقائي</option>
         </select>
       </div>
@@ -1048,6 +1066,57 @@ select option{background:var(--card2)}
   </div>
 </div>
 
+<!-- Modal: Add Bank -->
+<div class="modal-overlay" id="modal-add-bank">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title"><i class="ti ti-plus"></i>إضافة بنك جديد</div>
+      <button class="modal-close" onclick="closeModal('modal-add-bank')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-group" style="margin-bottom:12px"><label>اسم البنك (يظهر في القوائم)</label><input type="text" id="bank-new-label" placeholder="مثال: بنك ساب (SABB)"></div>
+    <div class="form-group" style="margin-bottom:12px"><label>الحساب المرتبط في الشجرة</label><select id="bank-new-acc"></select></div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>نوع القراءة (إن كان الكشف بصيغة بنك معروف، اختره؛ غير ذلك استخدم "كشف تلقائي")</label>
+      <select id="bank-new-parser">
+        <option value="Generic">كشف تلقائي (أعمدة عامة)</option>
+        <option value="AlAhli">مثل الأهلي السعودي</option>
+        <option value="Alinma">مثل بنك الإنماء</option>
+        <option value="Riyad">مثل بنك الرياض</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="addBank()"><i class="ti ti-check"></i>حفظ البنك</button>
+      <button class="btn ghost" onclick="closeModal('modal-add-bank')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit Bank -->
+<div class="modal-overlay" id="modal-edit-bank">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title"><i class="ti ti-edit"></i>تعديل بنك</div>
+      <button class="modal-close" onclick="closeModal('modal-edit-bank')"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="edit-bank-id">
+    <div class="form-group" style="margin-bottom:12px"><label>اسم البنك</label><input type="text" id="edit-bank-label"></div>
+    <div class="form-group" style="margin-bottom:12px"><label>الحساب المرتبط</label><select id="edit-bank-acc"></select></div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>نوع القراءة</label>
+      <select id="edit-bank-parser">
+        <option value="Generic">كشف تلقائي (أعمدة عامة)</option>
+        <option value="AlAhli">مثل الأهلي السعودي</option>
+        <option value="Alinma">مثل بنك الإنماء</option>
+        <option value="Riyad">مثل بنك الرياض</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="saveEditBank()"><i class="ti ti-check"></i>حفظ التعديل</button>
+      <button class="btn ghost" onclick="closeModal('modal-edit-bank')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Edit Tx in Review -->
 <div class="modal-overlay" id="modal-edit-tx">
   <div class="modal" style="width:580px">
@@ -1126,10 +1195,11 @@ function nav(page) {
   if (page === 'customers') { _customers = []; renderCustomers(); }
   if (page === 'expenses') { _expenses = []; renderExpenses(); }
   if (page === 'locations') { _locations = []; renderLocations(); }
+  if (page === 'banks') { _banks = []; renderBanks(); }
   if (page === 'master') { _master = []; renderMaster(); }
   if (page === 'review') renderReview();
   if (page === 'journals') renderJournals();
-  if (page === 'upload') loadAccountOptions();
+  if (page === 'upload') { loadAccountOptions().then(renderBanks); }
 }
 document.querySelectorAll('.sb-item[data-page]').forEach(el => {
   el.addEventListener('click', () => nav(el.dataset.page));
@@ -1668,6 +1738,95 @@ async function saveEditLocation() {
   };
   await fetch('/api/locations/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
   _locations = []; LOCATION_OPTIONS = []; closeModal('modal-edit-location'); renderLocations(); showNotif('تم التحديث');
+}
+
+/* ═══════════════════════════════════════
+   BANKS
+════════════════════════════════════════ */
+let _banks = [];
+
+async function renderBanks() {
+  if (!ACCOUNT_OPTIONS.length) await loadAccountOptions();
+  if (!_banks.length) { const r = await fetch('/api/banks'); _banks = await r.json(); }
+  const tbody = document.getElementById('bank-table');
+  if (!_banks.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><i class="ti ti-building-bank"></i><p>لا توجد بنوك مضافة</p></div></td></tr>'; }
+  else {
+    tbody.innerHTML = _banks.map(b => `<tr>
+      <td class="bold">${b.bank_label}</td>
+      <td><span class="tbl-code">${(b.acc_link||'').split(' - ')[0]}</span> <span class="tbl-muted">${(b.acc_link||'').split(' - ').slice(1).join(' - ')}</span></td>
+      <td><span class="badge muted">${b.parser_type}</span></td>
+      <td>
+        <button class="btn sm ghost icon-only" onclick="openEditBank(${b.id})"><i class="ti ti-edit"></i></button>
+        <button class="btn sm danger icon-only" onclick="delBank(${b.id})"><i class="ti ti-trash"></i></button>
+      </td>
+    </tr>`).join('');
+  }
+  document.getElementById('bank-total').textContent = _banks.length;
+  document.getElementById('bank-linked').textContent = _banks.filter(b => b.acc_link).length;
+  populateBankSelect();
+}
+
+function populateBankSelect() {
+  const sel = document.getElementById('bank-select');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="Auto">كشف تلقائي</option>' +
+    _banks.map(b => `<option value="${b.parser_type}" data-acc="${b.acc_link}">${b.bank_label}</option>`).join('');
+  if (current) sel.value = current;
+}
+
+function onBankSelectChange(val) {
+  const sel = document.getElementById('bank-select');
+  const opt = sel.options[sel.selectedIndex];
+  const acc = opt ? opt.dataset.acc : '';
+  const accSel = document.getElementById('bank-acc');
+  if (acc && accSel) {
+    for (let i = 0; i < accSel.options.length; i++) {
+      if (accSel.options[i].value === acc) { accSel.selectedIndex = i; break; }
+    }
+  }
+}
+
+function fillBankAccOptions(selectId, selected) {
+  const sel = document.getElementById(selectId);
+  if (sel) sel.innerHTML = ACCOUNT_OPTIONS.map(o => `<option value="${o}" ${o === selected ? 'selected' : ''}>${o}</option>`).join('');
+}
+
+async function addBank() {
+  const bank_label = document.getElementById('bank-new-label').value.trim();
+  const acc_link = document.getElementById('bank-new-acc').value;
+  const parser_type = document.getElementById('bank-new-parser').value;
+  if (!bank_label || !acc_link) { showNotif('اكمل بيانات البنك', 'error'); return; }
+  const bank_key = bank_label.replace(/\s+/g, '_') + '_' + Date.now();
+  const res = await fetch('/api/banks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bank_key, bank_label, acc_link, parser_type }) });
+  const out = await res.json();
+  if (out.error) { showNotif(out.error, 'error'); return; }
+  document.getElementById('bank-new-label').value = '';
+  _banks = []; closeModal('modal-add-bank'); renderBanks();
+  showNotif(`تم إضافة البنك: ${bank_label}`);
+}
+
+function openEditBank(id) {
+  const b = _banks.find(x => x.id === id); if (!b) return;
+  document.getElementById('edit-bank-id').value = id;
+  document.getElementById('edit-bank-label').value = b.bank_label;
+  document.getElementById('edit-bank-parser').value = b.parser_type || 'Generic';
+  fillBankAccOptions('edit-bank-acc', b.acc_link);
+  openModal('modal-edit-bank');
+}
+async function saveEditBank() {
+  const id = document.getElementById('edit-bank-id').value;
+  const data = {
+    bank_label: document.getElementById('edit-bank-label').value.trim(),
+    acc_link: document.getElementById('edit-bank-acc').value,
+    parser_type: document.getElementById('edit-bank-parser').value
+  };
+  await fetch('/api/banks/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  _banks = []; closeModal('modal-edit-bank'); renderBanks(); showNotif('تم التحديث');
+}
+async function delBank(id) {
+  if (!confirm('حذف هذا البنك؟')) return;
+  await fetch('/api/banks/' + id, { method: 'DELETE' }); _banks = []; renderBanks(); showNotif('تم الحذف');
 }
 async function delLocation(id) {
   if (!confirm('حذف هذا الموقع؟')) return;
@@ -2254,7 +2413,7 @@ async function exportAllExcel() {
 
 // ── INIT ──
 loadDashboard();
-loadAccountOptions();
+loadAccountOptions().then(() => { renderBanks(); });
 </script>
 </body>
 </html>
