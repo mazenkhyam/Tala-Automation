@@ -140,11 +140,29 @@ def match_entity(bank_desc: str, master: list) -> dict:
     return {'sys_name': '', 'acc_link': '', 'entity_type': 'unknown', 'method': 'none', 'confidence': 0}
 
 
+_INVOICE_RE = re.compile(
+    r'Bill\s+(\d{4,})|فاتورة\s*(?:رقم)?\s*[:#]?\s*(\d{4,})|Invoice\s*(?:No\.?|Number)?\s*[:#]?\s*(\d{4,})',
+    re.IGNORECASE
+)
+
+
+def extract_invoice_no(bank_desc: str) -> str:
+    """يستخرج رقم الفاتورة من نص حركة البنك إن وُجد (Bill 30124996398، فاتورة رقم 123، إلخ)."""
+    m = _INVOICE_RE.search(str(bank_desc or ''))
+    if not m:
+        return ''
+    return next((g for g in m.groups() if g), '')
+
+
 def build_memo(entity_type: str, sys_name: str, bank_desc: str) -> str:
+    invoice_no = extract_invoice_no(bank_desc)
+    suffix = f" فاتورة رقم {invoice_no}" if invoice_no else ''
     if entity_type == 'supplier' and sys_name:
-        return f"Payment To {sys_name}"
+        return f"Payment To {sys_name}{suffix}"
     if entity_type == 'customer' and sys_name:
-        return f"Collection From {sys_name}"
+        return f"Collection From {sys_name}{suffix}"
+    if entity_type == 'expense' and sys_name:
+        return f"Payment To {sys_name}{suffix}" if suffix else f"{sys_name} - {bank_desc}"
     return bank_desc
 
 
@@ -165,8 +183,6 @@ def build_journal_lines(tx: dict, bank_account: str, match: dict) -> list:
     fee_amount, fee_vat = extract_bank_fee(tx.get('bank_desc', ''))
     fee_code = BANK_FEE_ACCOUNT.split(' - ')[0]
     fee_name = BANK_FEE_ACCOUNT.split(' - ', 1)[1]
-    vat_code = VAT_PAYABLE_ACCOUNT.split(' - ')[0]
-    vat_name = VAT_PAYABLE_ACCOUNT.split(' - ', 1)[1]
 
     lines = []
     if amount > 0:
