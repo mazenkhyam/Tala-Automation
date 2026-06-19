@@ -5,6 +5,7 @@ Flask Backend — يخدم الواجهة (نفس تصميم tala_full_system.ht
 """
 
 import os
+import re
 import sqlite3
 import datetime
 from io import BytesIO
@@ -1029,26 +1030,87 @@ def api_locations_update(item_id):
 @app.route('/api/dashboard/cashflow')
 def api_cashflow():
     """
-    بيانات Cash Flow شهرية للـ Dashboard.
+    التدفق النقدي اليومي لشهر محدد (مع supplier breakdown).
+    query param: month=YYYY-MM (افتراضي: الشهر الحالي)
     يُحسب فقط من سطور حسابات البنوك (Cash/Bank accounts)، لأن أي قيد متوازن
-    بالتعريف (إجمالي مدين = إجمالي دائن على مستوى كل سطوره)، فحساب التدفق من
-    إجمالي مدين/دائن الجدول كله يساوي بينهما دائماً وهذا غير صحيح لتحليل الكاش فلو.
-    على حساب البنك: مدين = تدفق داخل (Inflow/إيداع)، دائن = تدفق خارج (Outflow/مسحوبات).
+    بالتعريف، فحساب التدفق من إجمالي مدين/دائن الجدول كله يساوي بينهما دائماً
+    وهذا غير صحيح لتحليل الكاش فلو. على حساب البنك: مدين = تدفق داخل (إيداع)،
+    دائن = تدفق خارج (مسحوبات).
     """
+    month = request.args.get('month', '').strip()
+    if not month:
+        month = datetime.date.today().strftime('%Y-%m')
+
     bank_codes = [acc.split(' - ')[0] for acc in get_bank_accounts().values()]
     placeholders = ','.join('?' * len(bank_codes))
     conn = get_conn()
-    df = pd.read_sql_query(f"""
-        SELECT strftime('%Y-%m', journal_date) as month,
+
+    # تدفق يومي خلال الشهر المحدد
+    daily = pd.read_sql_query(f"""
+        SELECT journal_date as day,
                SUM(CASE WHEN debit > 0 THEN debit ELSE 0 END) as inflow,
                SUM(CASE WHEN credit > 0 THEN credit ELSE 0 END) as outflow
         FROM journals
-        WHERE journal_date >= date('now', '-6 months')
+        WHERE strftime('%Y-%m', journal_date) = ?
           AND account_code IN ({placeholders})
-        GROUP BY month ORDER BY month
-    """, conn, params=bank_codes)
+        GROUP BY journal_date ORDER BY journal_date
+    """, conn, params=[month] + bank_codes)
+
+    # إجمالي الشهر
+    totals_row = conn.execute(f"""
+        SELECT COALESCE(SUM(CASE WHEN debit>0 THEN debit ELSE 0 END),0) inflow,
+               COALESCE(SUM(CASE WHEN credit>0 THEN credit ELSE 0 END),0) outflow
+        FROM journals
+        WHERE strftime('%Y-%m', journal_date) = ?
+          AND account_code IN ({placeholders})
+    """, [month] + bank_codes).fetchone()
+
+    # السدادات حسب المورد/الجهة خلال الشهر (من سطور المدين على حسابات غير البنك، أي ما تم صرفه)
+    supplier_rows = conn.execute(f"""
+        SELECT entity_name, SUM(debit) total, COUNT(DISTINCT journal_no) cnt,
+               GROUP_CONCAT(DISTINCT memo) memos
+        FROM journals
+        WHERE strftime('%Y-%m', journal_date) = ?
+          AND debit > 0 AND account_code NOT IN ({placeholders})
+          AND entity_name IS NOT NULL AND entity_name != ''
+        GROUP BY entity_name ORDER BY total DESC
+    """, [month] + bank_codes).fetchall()
+
+    invoice_re = re.compile(r'(?:رقم|Bill|Invoice|فاتورة)\s*[:#]?\s*([A-Za-z0-9\-/]+)', re.IGNORECASE)
+
+    suppliers = []
+    for r in supplier_rows:
+        memos = (r['memos'] or '')
+        m = invoice_re.search(memos)
+        invoice_no = m.group(1) if m else ''
+        suppliers.append({
+            'entity_name': r['entity_name'],
+            'total': float(r['total']),
+            'count': r['cnt'],
+            'invoice_no': invoice_no,
+        })
+
+    # تصنيف خاص: كهرباء / اتصالات / حكومي ضمن المصروفات (مطابقة بالاسم/البيان)
+    categories = {'كهرباء': ['ELECTRIC', 'كهرباء', 'SEC'],
+                  'اتصالات': ['STC', 'MOBILY', 'ZAIN', 'اتصالات'],
+                  'حكومي': ['GOSI', 'GOVERNMENT', 'MOL', 'حكوم', 'DIWAN', 'IQAMA']}
+    category_totals = {k: 0.0 for k in categories}
+    for r in supplier_rows:
+        text = f"{r['entity_name']} {r['memos'] or ''}".upper()
+        for cat, kws in categories.items():
+            if any(kw.upper() in text for kw in kws):
+                category_totals[cat] += float(r['total'])
+                break
+
     conn.close()
-    return jsonify(df.to_dict('records'))
+    return jsonify({
+        'month': month,
+        'daily': daily.to_dict('records'),
+        'total_inflow': float(totals_row['inflow']),
+        'total_outflow': float(totals_row['outflow']),
+        'suppliers': suppliers,
+        'category_totals': category_totals,
+    })
 
 # ══════════════════════════════════════════════════════════════
 # API — تصدير سجل القيود المحفوظة (CSV / Excel) من قاعدة البيانات
