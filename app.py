@@ -198,12 +198,12 @@ def api_dashboard():
 
     # إجمالي الإيداعات/المسحوبات الحقيقي = من سطور حسابات البنوك فقط
     # (جمع كل الجدول يعطي مدين=دائن دائماً لأن كل قيد متوازن بالتعريف، وهذا غير مفيد كمؤشر كاش فلو)
-    bank_codes = [acc.split(' - ')[0] for acc in get_bank_accounts().values()]
+    bank_codes = [acc.split(' - ')[0].strip() for acc in get_bank_accounts().values()]
     placeholders = ','.join('?' * len(bank_codes))
     cash_row = conn.execute(f"""
         SELECT COALESCE(SUM(CASE WHEN debit > 0 THEN debit ELSE 0 END),0) inflow,
                COALESCE(SUM(CASE WHEN credit > 0 THEN credit ELSE 0 END),0) outflow
-        FROM journals WHERE account_code IN ({placeholders})
+        FROM journals WHERE TRIM(account_code) IN ({placeholders})
     """, bank_codes).fetchone()
     total_inflow = cash_row['inflow']
     total_outflow = cash_row['outflow']
@@ -212,7 +212,7 @@ def api_dashboard():
     top_expenses_rows = conn.execute(f"""
         SELECT account_name, SUM(debit) total
         FROM journals
-        WHERE debit > 0 AND account_code NOT IN ({placeholders})
+        WHERE debit > 0 AND TRIM(account_code) NOT IN ({placeholders})
         GROUP BY account_name ORDER BY total DESC LIMIT 5
     """, bank_codes).fetchall()
     top_expenses = [{'name': r['account_name'], 'total': float(r['total'])} for r in top_expenses_rows]
@@ -224,13 +224,21 @@ def api_dashboard():
     status_counts = {r['status']: r['c'] for r in status_rows}
 
     # رصيد كل حساب بنكي حالياً (تقديري: مدين - دائن منذ بداية السجل)
+    # المطابقة بكود الحساب (الجزء الرقمي)، مع احتياط إضافي: لو مفيش نتيجة جرّب
+    # المطابقة الكاملة على acc_link لتغطية أي فروق تنسيق بين جدول البنوك والقيود المحفوظة.
     bank_balances = []
     for bank_name, acc_link in get_bank_accounts().items():
-        code = acc_link.split(' - ')[0]
+        code = acc_link.split(' - ')[0].strip()
         row = conn.execute(
-            "SELECT COALESCE(SUM(debit),0) d, COALESCE(SUM(credit),0) c FROM journals WHERE account_code=?",
+            "SELECT COALESCE(SUM(debit),0) d, COALESCE(SUM(credit),0) c FROM journals WHERE TRIM(account_code)=?",
             (code,)
         ).fetchone()
+        if not row['d'] and not row['c']:
+            # احتياط: جرّب المطابقة عبر اسم الحساب بدلاً من الكود
+            row = conn.execute(
+                "SELECT COALESCE(SUM(debit),0) d, COALESCE(SUM(credit),0) c FROM journals WHERE account_name=?",
+                (acc_link.split(' - ', 1)[1].strip() if ' - ' in acc_link else acc_link,)
+            ).fetchone()
         balance = float(row['d']) - float(row['c'])
         if row['d'] or row['c']:
             bank_balances.append({'bank': bank_name, 'account': acc_link, 'balance': balance})
@@ -1040,7 +1048,7 @@ def api_cashflow():
     month = request.args.get('month', '').strip()
     show_all = (month == 'all')
 
-    bank_codes = [acc.split(' - ')[0] for acc in get_bank_accounts().values()]
+    bank_codes = [acc.split(' - ')[0].strip() for acc in get_bank_accounts().values()]
     placeholders = ','.join('?' * len(bank_codes))
     conn = get_conn()
 
@@ -1063,7 +1071,7 @@ def api_cashflow():
                    SUM(CASE WHEN debit > 0 THEN debit ELSE 0 END) as inflow,
                    SUM(CASE WHEN credit > 0 THEN credit ELSE 0 END) as outflow
             FROM journals
-            WHERE account_code IN ({placeholders})
+            WHERE TRIM(account_code) IN ({placeholders})
             GROUP BY journal_date ORDER BY journal_date
         """, conn, params=bank_codes)
     else:
@@ -1073,7 +1081,7 @@ def api_cashflow():
                    SUM(CASE WHEN credit > 0 THEN credit ELSE 0 END) as outflow
             FROM journals
             WHERE strftime('%Y-%m', journal_date) = ?
-              AND account_code IN ({placeholders})
+              AND TRIM(account_code) IN ({placeholders})
             GROUP BY journal_date ORDER BY journal_date
         """, conn, params=[month] + bank_codes)
 
@@ -1082,7 +1090,7 @@ def api_cashflow():
                COALESCE(SUM(CASE WHEN credit>0 THEN credit ELSE 0 END),0) outflow
         FROM journals
         WHERE 1=1 {date_filter_sql}
-          AND account_code IN ({placeholders})
+          AND TRIM(account_code) IN ({placeholders})
     """, date_params + bank_codes).fetchone()
 
     # الموردين: السدادات (مدين على حسابات غير البنك)
@@ -1091,21 +1099,27 @@ def api_cashflow():
                GROUP_CONCAT(DISTINCT memo) memos
         FROM journals
         WHERE 1=1 {date_filter_sql}
-          AND debit > 0 AND account_code NOT IN ({placeholders})
+          AND debit > 0 AND TRIM(account_code) NOT IN ({placeholders})
           AND entity_name IS NOT NULL AND entity_name != ''
         GROUP BY entity_name ORDER BY total DESC
     """, date_params + bank_codes).fetchall()
 
-    # العملاء: التحصيلات (دائن على حسابات غير البنك، أي ما تم تحصيله من عميل)
+    # العملاء: التحصيلات (دائن على حسابات غير البنك) — يشمل أي حركة على حساب
+    # "ذمم/Receivable" حتى لو لم يتم التعرف على اسم العميل تلقائياً (entity_name فاضي)،
+    # أو حركة تم وسمها فعلياً كـ "Collection From..." عبر محرك المطابقة.
     customer_rows = conn.execute(f"""
-        SELECT entity_name, SUM(credit) total, COUNT(DISTINCT journal_no) cnt,
-               GROUP_CONCAT(DISTINCT memo) memos
+        SELECT
+            CASE WHEN entity_name IS NOT NULL AND entity_name != '' THEN entity_name ELSE memo END as label,
+            SUM(credit) total, COUNT(DISTINCT journal_no) cnt
         FROM journals
         WHERE 1=1 {date_filter_sql}
-          AND credit > 0 AND account_code NOT IN ({placeholders})
-          AND entity_name IS NOT NULL AND entity_name != ''
-          AND memo LIKE 'Collection From%'
-        GROUP BY entity_name ORDER BY total DESC
+          AND credit > 0 AND TRIM(account_code) NOT IN ({placeholders})
+          AND (
+                memo LIKE 'Collection From%'
+                OR account_name LIKE '%Receivable%'
+                OR account_name LIKE '%ذمم%'
+              )
+        GROUP BY label ORDER BY total DESC
     """, date_params + bank_codes).fetchall()
 
     invoice_re = re.compile(r'(?:رقم|Bill|Invoice|فاتورة)\s*[:#]?\s*([A-Za-z0-9\-/]+)', re.IGNORECASE)
@@ -1139,7 +1153,7 @@ def api_cashflow():
         })
 
     customers = [{
-        'entity_name': r['entity_name'],
+        'entity_name': (r['label'] or 'غير محدد')[:60],
         'total': float(r['total']),
         'count': r['cnt'],
     } for r in customer_rows]
@@ -1150,7 +1164,7 @@ def api_cashflow():
                GROUP_CONCAT(DISTINCT journal_no) journal_nos
         FROM journals
         WHERE 1=1 {date_filter_sql}
-          AND account_code IN ({placeholders})
+          AND TRIM(account_code) IN ({placeholders})
         GROUP BY journal_date, memo, debit, credit
         HAVING COUNT(DISTINCT journal_no) > 1
         ORDER BY journal_date DESC
