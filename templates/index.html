@@ -271,6 +271,16 @@ select option{background:var(--card2)}
 .cf-bar.inflow{background:var(--green);opacity:.8}
 .cf-bar.outflow{background:var(--red);opacity:.8}
 
+/* ═══ CASH FLOW FILTER BAR ═══ */
+.cf-filter-bar{display:flex;align-items:center;gap:8px}
+.cf-month-wrap{position:relative;display:flex;align-items:center;background:var(--card2);border:1px solid var(--border);
+  border-radius:8px;padding:0 10px;height:32px;gap:6px}
+.cf-month-wrap i{font-size:14px;color:var(--text3)}
+.cf-month-wrap input[type="month"]{background:transparent;border:none;color:var(--text1);font-size:12px;
+  font-family:'JetBrains Mono',monospace;width:110px;padding:0;height:30px;color-scheme:dark}
+.cf-month-wrap input[type="month"]::-webkit-calendar-picker-indicator{filter:invert(.7);cursor:pointer}
+#cf-all-btn.primary{background:var(--gold);color:#1a1410;border-color:var(--gold)}
+
 /* ═══ DASHBOARD: bank balances, top expenses, status breakdown ═══ */
 .bank-bal-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)}
 .bank-bal-row:last-child{border-bottom:none}
@@ -468,9 +478,12 @@ select option{background:var(--card2)}
     <div class="card" style="margin-bottom:0">
       <div class="card-hdr">
         <div class="card-title"><i class="ti ti-chart-bar"></i><span data-i18n="cf_title">التدفق النقدي</span></div>
-        <div class="flex gap6">
-          <input type="month" id="cf-month-picker" onchange="loadCashflowMonth(this.value)" style="width:150px">
-          <button class="btn sm ghost" id="cf-all-btn" onclick="loadCashflowMonth('all')" data-i18n="cf_all_data">كل البيانات</button>
+        <div class="cf-filter-bar">
+          <button class="btn sm" id="cf-all-btn" onclick="loadCashflowMonth('all')" data-i18n="cf_all_data">كل البيانات</button>
+          <div class="cf-month-wrap">
+            <i class="ti ti-calendar"></i>
+            <input type="month" id="cf-month-picker" onchange="loadCashflowMonth(this.value)">
+          </div>
         </div>
       </div>
       <div id="cf-chart-wrap">
@@ -581,7 +594,7 @@ select option{background:var(--card2)}
     <div class="tbl-wrap">
       <table>
         <colgroup><col style="width:100px"><col><col style="width:120px"><col style="width:90px"></colgroup>
-        <thead><tr><th>كود الحساب</th><th>اسم الحساب</th><th>النوع</th><th>إجراء</th></tr></thead>
+        <thead><tr><th data-i18n="th_acc_code">كود الحساب</th><th data-i18n="th_acc_name">اسم الحساب</th><th data-i18n="th_type">النوع</th><th data-i18n="th_action">إجراء</th></tr></thead>
         <tbody id="acc-table"><tr><td colspan="4"><div class="empty"><i class="ti ti-loader"></i><p>جاري التحميل...</p></div></td></tr></tbody>
       </table>
     </div>
@@ -606,7 +619,7 @@ select option{background:var(--card2)}
     <div class="tbl-wrap">
       <table>
         <colgroup><col><col><col><col style="width:80px"><col style="width:120px"></colgroup>
-        <thead><tr><th>اسم البنك</th><th>اسم النظام</th><th>الحساب</th><th>النوع</th><th>إجراءات</th></tr></thead>
+        <thead><tr><th data-i18n="th_bank_name">اسم البنك</th><th data-i18n="th_sys_name">اسم النظام</th><th data-i18n="th_account">الحساب</th><th data-i18n="th_type">النوع</th><th data-i18n="th_actions">إجراءات</th></tr></thead>
         <tbody id="sup-table"><tr><td colspan="5"><div class="empty"><i class="ti ti-loader"></i><p>جاري التحميل...</p></div></td></tr></tbody>
       </table>
     </div>
@@ -631,7 +644,7 @@ select option{background:var(--card2)}
     <div class="tbl-wrap">
       <table>
         <colgroup><col><col><col><col style="width:80px"><col style="width:120px"></colgroup>
-        <thead><tr><th>اسم البنك</th><th>اسم النظام</th><th>الحساب</th><th>النوع</th><th>إجراءات</th></tr></thead>
+        <thead><tr><th data-i18n="th_bank_name">اسم البنك</th><th data-i18n="th_sys_name">اسم النظام</th><th data-i18n="th_account">الحساب</th><th data-i18n="th_type">النوع</th><th data-i18n="th_actions">إجراءات</th></tr></thead>
         <tbody id="cust-table"><tr><td colspan="5"><div class="empty"><i class="ti ti-loader"></i><p>جاري التحميل...</p></div></td></tr></tbody>
       </table>
     </div>
@@ -656,7 +669,7 @@ select option{background:var(--card2)}
     <div class="tbl-wrap">
       <table>
         <colgroup><col><col><col style="width:60px"><col style="width:120px"></colgroup>
-        <thead><tr><th>وصف البنك</th><th>مسمى المصروف</th><th>كود الحساب</th><th>إجراءات</th></tr></thead>
+        <thead><tr><th data-i18n="th_bank_desc">وصف البنك</th><th data-i18n="th_exp_name">مسمى المصروف</th><th data-i18n="th_acc_code">كود الحساب</th><th data-i18n="th_actions">إجراءات</th></tr></thead>
         <tbody id="exp-table"><tr><td colspan="4"><div class="empty"><i class="ti ti-loader"></i><p>جاري التحميل...</p></div></td></tr></tbody>
       </table>
     </div>
@@ -684,7 +697,7 @@ select option{background:var(--card2)}
     <div class="tbl-wrap">
       <table>
         <colgroup><col><col style="width:130px"><col style="width:120px"><col style="width:140px"></colgroup>
-        <thead><tr><th>اسم الموقع</th><th>النوع</th><th>المدينة</th><th>إجراءات</th></tr></thead>
+        <thead><tr><th data-i18n="th_loc_name">اسم الموقع</th><th data-i18n="th_type">النوع</th><th data-i18n="th_city">المدينة</th><th data-i18n="th_actions">إجراءات</th></tr></thead>
         <tbody id="loc-table"><tr><td colspan="4"><div class="empty"><i class="ti ti-loader"></i><p>جاري التحميل...</p></div></td></tr></tbody>
       </table>
     </div>
@@ -704,7 +717,7 @@ select option{background:var(--card2)}
     <div class="tbl-wrap">
       <table>
         <colgroup><col><col style="width:220px"><col style="width:160px"><col style="width:120px"></colgroup>
-        <thead><tr><th>اسم البنك</th><th>الحساب المرتبط</th><th>نوع القراءة</th><th>إجراءات</th></tr></thead>
+        <thead><tr><th data-i18n="th_bank_name2">اسم البنك</th><th data-i18n="th_linked_acc">الحساب المرتبط</th><th data-i18n="th_parser_type">نوع القراءة</th><th data-i18n="th_actions">إجراءات</th></tr></thead>
         <tbody id="bank-table"><tr><td colspan="4"><div class="empty"><i class="ti ti-loader"></i><p>جاري التحميل...</p></div></td></tr></tbody>
       </table>
     </div>
@@ -727,11 +740,11 @@ select option{background:var(--card2)}
     <div class="tbl-wrap">
       <table>
         <thead><tr>
-          <th style="width:80px">النوع</th>
-          <th>الاسم في النظام</th>
-          <th>الاسم في البنك</th>
-          <th style="width:70px">كود الحساب</th>
-          <th>اسم الحساب</th>
+          <th style="width:80px" data-i18n="th_type">النوع</th>
+          <th data-i18n="th_name_in_system">الاسم في النظام</th>
+          <th data-i18n="th_name_in_bank">الاسم في البنك</th>
+          <th style="width:70px" data-i18n="th_acc_code">كود الحساب</th>
+          <th data-i18n="th_acc_name">اسم الحساب</th>
         </tr></thead>
         <tbody id="master-table"><tr><td colspan="5"><div class="empty"><i class="ti ti-loader"></i><p>جاري التحميل...</p></div></td></tr></tbody>
       </table>
@@ -743,48 +756,48 @@ select option{background:var(--card2)}
 <div class="sc" id="sc-upload">
   <div class="card">
     <div class="card-hdr">
-      <div class="card-title"><i class="ti ti-settings"></i>إعدادات الكشف البنكي</div>
+      <div class="card-title"><i class="ti ti-settings"></i><span data-i18n="statement_settings">إعدادات الكشف البنكي</span></div>
     </div>
     <div class="form-grid g3">
       <div class="form-group">
-        <label>البنك</label>
+        <label data-i18n="lbl_bank">البنك</label>
         <select id="bank-select" onchange="onBankSelectChange(this.value)">
-          <option value="Auto">كشف تلقائي</option>
+          <option value="Auto" data-i18n="opt_auto_detect">كشف تلقائي</option>
         </select>
       </div>
       <div class="form-group">
-        <label>حساب البنك في الشجرة</label>
+        <label data-i18n="lbl_bank_acc_tree">حساب البنك في الشجرة</label>
         <select id="bank-acc"></select>
       </div>
       <div class="form-group">
-        <label>ملف الكشف (Excel / CSV)</label>
+        <label data-i18n="lbl_statement_file">ملف الكشف (Excel / CSV)</label>
         <input type="file" id="bank-file" accept=".xlsx,.xls,.csv">
       </div>
     </div>
     <button class="btn primary lg" onclick="uploadStatement()" style="width:100%;justify-content:center">
-      <i class="ti ti-file-upload"></i>معالجة الكشف وعرض القيود
+      <i class="ti ti-file-upload"></i><span data-i18n="btn_process_statement">معالجة الكشف وعرض القيود</span>
     </button>
     <div class="progress-wrap" id="upload-progress" style="margin-top:12px">
       <div class="progress"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
-      <div class="progress-lbl" id="prog-lbl">جاري المعالجة...</div>
+      <div class="progress-lbl" id="prog-lbl" data-i18n="processing">جاري المعالجة...</div>
     </div>
   </div>
 
   <div id="upload-preview" style="display:none">
     <div class="card">
       <div class="card-hdr">
-        <div class="card-title"><i class="ti ti-eye"></i>معاينة أول 10 عمليات</div>
+        <div class="card-title"><i class="ti ti-eye"></i><span data-i18n="preview_title">معاينة أول 10 عمليات</span></div>
         <span class="badge blue" id="upload-count">0 عملية</span>
       </div>
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th>التاريخ</th><th>وصف البنك</th><th>المبلغ</th><th>المطابقة</th><th>الثقة</th></tr></thead>
+          <thead><tr><th data-i18n="th_date">التاريخ</th><th data-i18n="th_bank_desc">وصف البنك</th><th data-i18n="th_amount">المبلغ</th><th data-i18n="th_match">المطابقة</th><th data-i18n="th_confidence">الثقة</th></tr></thead>
           <tbody id="preview-table"></tbody>
         </table>
       </div>
       <div class="mt12" style="text-align:left">
         <button class="btn gold lg" onclick="nav('review')">
-          الانتقال لمراجعة القيود <i class="ti ti-arrow-left"></i>
+          <span data-i18n="goto_review">الانتقال لمراجعة القيود</span> <i class="ti ti-arrow-left"></i>
         </button>
       </div>
     </div>
@@ -801,7 +814,7 @@ select option{background:var(--card2)}
   </div>
   <div class="card">
     <div class="card-hdr">
-      <div class="card-title"><i class="ti ti-table-check"></i>القيود المقترحة</div>
+      <div class="card-title"><i class="ti ti-table-check"></i><span data-i18n="suggested_entries">القيود المقترحة</span></div>
       <div class="card-actions">
         <select id="rev-filter" onchange="renderReview()" style="width:150px">
           <option value="all">الكل</option>
@@ -825,7 +838,7 @@ select option{background:var(--card2)}
 <div class="sc" id="sc-journals">
   <div class="card">
     <div class="card-hdr">
-      <div class="card-title"><i class="ti ti-history"></i>سجل القيود المحفوظة</div>
+      <div class="card-title"><i class="ti ti-history"></i><span data-i18n="saved_journals">سجل القيود المحفوظة</span></div>
       <div class="card-actions">
         <button class="btn sm gold" onclick="exportAllCSV()"><i class="ti ti-download"></i>تصدير CSV</button>
         <button class="btn sm success" onclick="exportAllExcel()"><i class="ti ti-file-spreadsheet"></i>Excel</button>
@@ -1193,7 +1206,9 @@ function nav(page) {
   document.getElementById('sc-' + page)?.classList.add('on');
   document.querySelector(`.sb-item[data-page="${page}"]`)?.classList.add('active');
   const icon = PAGE_ICONS[page] || 'ti-circle';
-  document.getElementById('tb-title').innerHTML = `<i class="ti ${icon}"></i>${PAGE_TITLES[page] || page}`;
+  const titleKey = 'nav_' + page;
+  const titleText = (I18N[titleKey] && I18N[titleKey][CURRENT_LANG]) || PAGE_TITLES[page] || page;
+  document.getElementById('tb-title').innerHTML = `<i class="ti ${icon}"></i>${titleText}`;
 
   if (page === 'dashboard') loadDashboard();
   if (page === 'accounts') { _accounts = []; renderAccounts(); }
@@ -1317,13 +1332,8 @@ async function loadDashboard() {
       </tr>`).join('');
     }
 
-    // شهر التدفق النقدي الافتراضي = الشهر الحالي
-    const picker = document.getElementById('cf-month-picker');
-    if (picker && !picker.value) {
-      const now = new Date();
-      picker.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    }
-    loadCashflowMonth(picker ? picker.value : '');
+    // الافتراضي عند فتح الداشبورد: عرض كل البيانات (بدون فلتر تاريخ)
+    loadCashflowMonth('all');
   } catch (e) { console.error(e); }
 }
 
@@ -1863,20 +1873,24 @@ async function renderBanks() {
   if (!ACCOUNT_OPTIONS.length) await loadAccountOptions();
   if (!_banks.length) { const r = await fetch('/api/banks'); _banks = await r.json(); }
   const tbody = document.getElementById('bank-table');
-  if (!_banks.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><i class="ti ti-building-bank"></i><p>لا توجد بنوك مضافة</p></div></td></tr>'; }
-  else {
-    tbody.innerHTML = _banks.map(b => `<tr>
-      <td class="bold">${b.bank_label}</td>
-      <td><span class="tbl-code">${(b.acc_link||'').split(' - ')[0]}</span> <span class="tbl-muted">${(b.acc_link||'').split(' - ').slice(1).join(' - ')}</span></td>
-      <td><span class="badge muted">${b.parser_type}</span></td>
-      <td>
-        <button class="btn sm ghost icon-only" onclick="openEditBank(${b.id})"><i class="ti ti-edit"></i></button>
-        <button class="btn sm danger icon-only" onclick="delBank(${b.id})"><i class="ti ti-trash"></i></button>
-      </td>
-    </tr>`).join('');
+  if (tbody) {
+    if (!_banks.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><i class="ti ti-building-bank"></i><p>لا توجد بنوك مضافة</p></div></td></tr>'; }
+    else {
+      tbody.innerHTML = _banks.map(b => `<tr>
+        <td class="bold">${b.bank_label}</td>
+        <td><span class="tbl-code">${(b.acc_link||'').split(' - ')[0]}</span> <span class="tbl-muted">${(b.acc_link||'').split(' - ').slice(1).join(' - ')}</span></td>
+        <td><span class="badge muted">${b.parser_type}</span></td>
+        <td>
+          <button class="btn sm ghost icon-only" onclick="openEditBank(${b.id})"><i class="ti ti-edit"></i></button>
+          <button class="btn sm danger icon-only" onclick="delBank(${b.id})"><i class="ti ti-trash"></i></button>
+        </td>
+      </tr>`).join('');
+    }
   }
-  document.getElementById('bank-total').textContent = _banks.length;
-  document.getElementById('bank-linked').textContent = _banks.filter(b => b.acc_link).length;
+  const totalEl = document.getElementById('bank-total');
+  const linkedEl = document.getElementById('bank-linked');
+  if (totalEl) totalEl.textContent = _banks.length;
+  if (linkedEl) linkedEl.textContent = _banks.filter(b => b.acc_link).length;
   populateBankSelect();
 }
 
@@ -1887,6 +1901,7 @@ function populateBankSelect() {
   sel.innerHTML = '<option value="Auto">كشف تلقائي</option>' +
     _banks.map(b => `<option value="${b.parser_type}" data-acc="${b.acc_link}">${b.bank_label}</option>`).join('');
   if (current) sel.value = current;
+  onBankSelectChange(sel.value);
 }
 
 function onBankSelectChange(val) {
@@ -2569,6 +2584,36 @@ const I18N = {
   th_party:         { ar: 'الطرف', en: 'Party' },
   th_debit:         { ar: 'مدين', en: 'Debit' },
   th_credit:        { ar: 'دائن', en: 'Credit' },
+  th_acc_code:      { ar: 'كود الحساب', en: 'Account Code' },
+  th_acc_name:      { ar: 'اسم الحساب', en: 'Account Name' },
+  th_type:          { ar: 'النوع', en: 'Type' },
+  th_action:        { ar: 'إجراء', en: 'Action' },
+  th_actions:       { ar: 'إجراءات', en: 'Actions' },
+  th_bank_name:     { ar: 'اسم البنك', en: 'Bank Name' },
+  th_bank_name2:    { ar: 'اسم البنك', en: 'Bank Name' },
+  th_sys_name:      { ar: 'اسم النظام', en: 'System Name' },
+  th_bank_desc:     { ar: 'وصف البنك', en: 'Bank Description' },
+  th_exp_name:      { ar: 'مسمى المصروف', en: 'Expense Name' },
+  th_loc_name:      { ar: 'اسم الموقع', en: 'Location Name' },
+  th_city:          { ar: 'المدينة', en: 'City' },
+  th_linked_acc:    { ar: 'الحساب المرتبط', en: 'Linked Account' },
+  th_parser_type:   { ar: 'نوع القراءة', en: 'Parser Type' },
+  th_name_in_system:{ ar: 'الاسم في النظام', en: 'Name in System' },
+  th_name_in_bank:  { ar: 'الاسم في البنك', en: 'Name in Bank' },
+  th_amount:        { ar: 'المبلغ', en: 'Amount' },
+  th_match:         { ar: 'المطابقة', en: 'Match' },
+  th_confidence:    { ar: 'الثقة', en: 'Confidence' },
+  lbl_bank:         { ar: 'البنك', en: 'Bank' },
+  opt_auto_detect:  { ar: 'كشف تلقائي', en: 'Auto Detect' },
+  lbl_bank_acc_tree:{ ar: 'حساب البنك في الشجرة', en: 'Bank Account (Chart)' },
+  lbl_statement_file:{ ar: 'ملف الكشف (Excel / CSV)', en: 'Statement File (Excel / CSV)' },
+  btn_process_statement: { ar: 'معالجة الكشف وعرض القيود', en: 'Process Statement & Show Entries' },
+  processing:       { ar: 'جاري المعالجة...', en: 'Processing...' },
+  preview_title:    { ar: 'معاينة أول 10 عمليات', en: 'Preview First 10 Transactions' },
+  goto_review:      { ar: 'الانتقال لمراجعة القيود', en: 'Go to Review Entries' },
+  statement_settings:{ ar: 'إعدادات الكشف البنكي', en: 'Bank Statement Settings' },
+  suggested_entries:{ ar: 'القيود المقترحة', en: 'Suggested Entries' },
+  saved_journals:   { ar: 'سجل القيود المحفوظة', en: 'Saved Journal History' },
 };
 
 let CURRENT_LANG = 'ar';
