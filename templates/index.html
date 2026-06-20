@@ -388,22 +388,22 @@ select option{background:var(--card2)}
     <div class="sb-logo-sub">نظام القيود المحاسبية الذكي</div>
   </div>
 
-  <div class="sb-section">الرئيسية</div>
-  <div class="sb-item active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i>لوحة التحكم</div>
+  <div class="sb-section" data-i18n="sec_main">الرئيسية</div>
+  <div class="sb-item active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i><span data-i18n="nav_dashboard">لوحة التحكم</span></div>
 
-  <div class="sb-section">إدارة البيانات</div>
-  <div class="sb-item" data-page="accounts"><i class="ti ti-binary-tree-2"></i>شجرة الحسابات</div>
-  <div class="sb-item" data-page="suppliers"><i class="ti ti-building-warehouse"></i>الموردين</div>
-  <div class="sb-item" data-page="customers"><i class="ti ti-users"></i>العملاء</div>
-  <div class="sb-item" data-page="expenses"><i class="ti ti-receipt-2"></i>بنود المصروفات</div>
-  <div class="sb-item" data-page="locations"><i class="ti ti-map-pin"></i>المواقع</div>
-  <div class="sb-item" data-page="banks"><i class="ti ti-building-bank"></i>البنوك</div>
-  <div class="sb-item" data-page="master"><i class="ti ti-database-search"></i>البيانات الموحدة</div>
+  <div class="sb-section" data-i18n="sec_data">إدارة البيانات</div>
+  <div class="sb-item" data-page="accounts"><i class="ti ti-binary-tree-2"></i><span data-i18n="nav_accounts">شجرة الحسابات</span></div>
+  <div class="sb-item" data-page="suppliers"><i class="ti ti-building-warehouse"></i><span data-i18n="nav_suppliers">الموردين</span></div>
+  <div class="sb-item" data-page="customers"><i class="ti ti-users"></i><span data-i18n="nav_customers">العملاء</span></div>
+  <div class="sb-item" data-page="expenses"><i class="ti ti-receipt-2"></i><span data-i18n="nav_expenses">بنود المصروفات</span></div>
+  <div class="sb-item" data-page="locations"><i class="ti ti-map-pin"></i><span data-i18n="nav_locations">المواقع</span></div>
+  <div class="sb-item" data-page="banks"><i class="ti ti-building-bank"></i><span data-i18n="nav_banks">البنوك</span></div>
+  <div class="sb-item" data-page="master"><i class="ti ti-database-search"></i><span data-i18n="nav_master">البيانات الموحدة</span></div>
 
-  <div class="sb-section">العمليات</div>
-  <div class="sb-item" data-page="upload"><i class="ti ti-file-upload"></i>رفع كشف البنك</div>
-  <div class="sb-item" data-page="review"><i class="ti ti-table-check"></i>مراجعة القيود</div>
-  <div class="sb-item" data-page="journals"><i class="ti ti-history"></i>سجل القيود</div>
+  <div class="sb-section" data-i18n="sec_ops">العمليات</div>
+  <div class="sb-item" data-page="upload"><i class="ti ti-file-upload"></i><span data-i18n="nav_upload">رفع كشف البنك</span></div>
+  <div class="sb-item" data-page="review"><i class="ti ti-table-check"></i><span data-i18n="nav_review">مراجعة القيود</span></div>
+  <div class="sb-item" data-page="journals"><i class="ti ti-history"></i><span data-i18n="nav_journals">سجل القيود</span></div>
 
   <div class="sb-footer">
     <div class="sb-user">
@@ -422,6 +422,7 @@ select option{background:var(--card2)}
     <div class="tb-title" id="tb-title"><i class="ti ti-layout-dashboard"></i>لوحة التحكم</div>
     <div class="tb-right">
       <div class="tb-status">متصل</div>
+      <button class="btn ghost sm" id="lang-toggle-btn" onclick="toggleLang()"><i class="ti ti-language"></i><span id="lang-toggle-lbl">EN</span></button>
       <button class="btn ghost sm" onclick="refreshPage()"><i class="ti ti-refresh"></i></button>
     </div>
   </div>
@@ -434,54 +435,58 @@ select option{background:var(--card2)}
   <div class="kpi-grid cols4">
     <div class="kpi gold">
       <div class="kpi-icon"><i class="ti ti-binary-tree-2"></i></div>
-      <div class="kpi-lbl">شجرة الحسابات</div>
+      <div class="kpi-lbl" data-i18n="kpi_accounts">شجرة الحسابات</div>
       <div class="kpi-val" id="s-accs">—</div>
-      <div class="kpi-sub">حساب مسجّل</div>
+      <div class="kpi-sub" data-i18n="kpi_accounts_sub">حساب مسجّل</div>
     </div>
     <div class="kpi red">
       <div class="kpi-icon"><i class="ti ti-building-warehouse"></i></div>
-      <div class="kpi-lbl">الموردين</div>
+      <div class="kpi-lbl" data-i18n="kpi_suppliers">الموردين</div>
       <div class="kpi-val" id="s-supps">—</div>
-      <div class="kpi-sub">مورد نشط</div>
+      <div class="kpi-sub" data-i18n="kpi_suppliers_sub">مورد نشط</div>
     </div>
     <div class="kpi green">
       <div class="kpi-icon"><i class="ti ti-users"></i></div>
-      <div class="kpi-lbl">العملاء</div>
+      <div class="kpi-lbl" data-i18n="kpi_customers">العملاء</div>
       <div class="kpi-val" id="s-custs">—</div>
-      <div class="kpi-sub">عميل نشط</div>
+      <div class="kpi-sub" data-i18n="kpi_customers_sub">عميل نشط</div>
     </div>
     <div class="kpi blue">
       <div class="kpi-icon"><i class="ti ti-receipt-2"></i></div>
-      <div class="kpi-lbl">بنود المصروفات</div>
+      <div class="kpi-lbl" data-i18n="kpi_expenses">بنود المصروفات</div>
       <div class="kpi-val" id="s-exps">—</div>
-      <div class="kpi-sub">قاعدة مطابقة</div>
+      <div class="kpi-sub" data-i18n="kpi_expenses_sub">قاعدة مطابقة</div>
     </div>
   </div>
+
+  <!-- Duplicate Day Warning -->
+  <div id="dup-warning-banner" style="display:none;margin-bottom:16px"></div>
 
   <!-- Cash Flow + Bank Balances -->
   <div class="grid2" style="margin-bottom:16px">
     <!-- Cash Flow Card -->
     <div class="card" style="margin-bottom:0">
       <div class="card-hdr">
-        <div class="card-title"><i class="ti ti-chart-bar"></i>التدفق النقدي اليومي</div>
+        <div class="card-title"><i class="ti ti-chart-bar"></i><span data-i18n="cf_title">التدفق النقدي</span></div>
         <div class="flex gap6">
           <input type="month" id="cf-month-picker" onchange="loadCashflowMonth(this.value)" style="width:150px">
+          <button class="btn sm ghost" id="cf-all-btn" onclick="loadCashflowMonth('all')" data-i18n="cf_all_data">كل البيانات</button>
         </div>
       </div>
       <div id="cf-chart-wrap">
-        <div class="cf-chart" id="cf-chart"><div class="text-muted text-sm" style="padding:20px">جاري تحميل البيانات...</div></div>
+        <div class="cf-chart" id="cf-chart"><div class="text-muted text-sm" style="padding:20px" data-i18n="loading">جاري تحميل البيانات...</div></div>
       </div>
       <div class="flex gap14 mt12" style="border-top:1px solid var(--border);padding-top:12px">
         <div>
-          <div class="text-xs text-muted mb-1">إجمالي الإيداعات</div>
+          <div class="text-xs text-muted mb-1" data-i18n="total_inflow">إجمالي الإيداعات</div>
           <div class="mono bold text-green" id="dash-credit" style="font-size:15px">—</div>
         </div>
         <div>
-          <div class="text-xs text-muted">إجمالي المسحوبات</div>
+          <div class="text-xs text-muted" data-i18n="total_outflow">إجمالي المسحوبات</div>
           <div class="mono bold text-red" id="dash-debit" style="font-size:15px">—</div>
         </div>
         <div style="margin-right:auto">
-          <div class="text-xs text-muted">صافي التدفق</div>
+          <div class="text-xs text-muted" data-i18n="net_flow">صافي التدفق</div>
           <div class="mono bold text-gold" id="dash-net" style="font-size:18px">—</div>
         </div>
       </div>
@@ -490,37 +495,46 @@ select option{background:var(--card2)}
     <!-- Bank Balances -->
     <div class="card" style="margin-bottom:0;display:flex;flex-direction:column">
       <div class="card-hdr">
-        <div class="card-title"><i class="ti ti-building-bank"></i>أرصدة الحسابات البنكية</div>
+        <div class="card-title"><i class="ti ti-building-bank"></i><span data-i18n="bank_balances">أرصدة الحسابات البنكية</span></div>
       </div>
       <div id="bank-balances-list" style="flex:1">
-        <div class="text-muted text-sm" style="padding:20px 0;text-align:center">جاري التحميل...</div>
+        <div class="text-muted text-sm" style="padding:20px 0;text-align:center" data-i18n="loading">جاري التحميل...</div>
       </div>
       <div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--border)">
-        <div class="text-xs text-muted" style="line-height:1.7">
+        <div class="text-xs text-muted" style="line-height:1.7" data-i18n="banks_supported">
           يدعم: بنك الأهلي السعودي · بنك الإنماء · بنك الرياض
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Top Expenses + Supplier Payments (filtered by selected month) -->
-  <div class="grid2" style="margin-bottom:16px">
+  <!-- Top Expenses + Customers + Supplier Payments -->
+  <div class="kpi-grid cols3" style="margin-bottom:16px;display:grid;gap:16px">
     <div class="card" style="margin-bottom:0">
       <div class="card-hdr">
-        <div class="card-title"><i class="ti ti-chart-pie"></i>أكبر بنود المصروفات</div>
+        <div class="card-title"><i class="ti ti-chart-pie"></i><span data-i18n="top_expenses">أكبر بنود المصروفات</span></div>
       </div>
       <div id="top-expenses-list">
-        <div class="text-muted text-sm" style="padding:20px 0;text-align:center">جاري التحميل...</div>
+        <div class="text-muted text-sm" style="padding:20px 0;text-align:center" data-i18n="loading">جاري التحميل...</div>
       </div>
     </div>
 
     <div class="card" style="margin-bottom:0;display:flex;flex-direction:column">
       <div class="card-hdr">
-        <div class="card-title"><i class="ti ti-building-store"></i>الموردين والسدادات خلال الشهر</div>
+        <div class="card-title"><i class="ti ti-users"></i><span data-i18n="customers_collections">العملاء والتحصيلات</span></div>
+      </div>
+      <div id="customer-collections-list" style="flex:1;max-height:340px;overflow-y:auto">
+        <div class="text-muted text-sm" style="padding:20px 0;text-align:center" data-i18n="loading">جاري التحميل...</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:0;display:flex;flex-direction:column">
+      <div class="card-hdr">
+        <div class="card-title"><i class="ti ti-building-store"></i><span data-i18n="suppliers_payments">الموردين والسدادات</span></div>
         <span class="text-xs text-muted" id="cf-month-label"></span>
       </div>
       <div id="supplier-payments-list" style="flex:1;max-height:340px;overflow-y:auto">
-        <div class="text-muted text-sm" style="padding:20px 0;text-align:center">جاري التحميل...</div>
+        <div class="text-muted text-sm" style="padding:20px 0;text-align:center" data-i18n="loading">جاري التحميل...</div>
       </div>
       <div class="status-pill-row" id="status-pill-row"></div>
     </div>
@@ -529,16 +543,16 @@ select option{background:var(--card2)}
   <!-- Recent Journals -->
   <div class="card">
     <div class="card-hdr">
-      <div class="card-title"><i class="ti ti-clock-hour-4"></i>آخر القيود المرحّلة</div>
-      <button class="btn sm ghost" onclick="nav('journals')">عرض الكل <i class="ti ti-arrow-left"></i></button>
+      <div class="card-title"><i class="ti ti-clock-hour-4"></i><span data-i18n="recent_journals">آخر القيود المرحّلة</span></div>
+      <button class="btn sm ghost" onclick="nav('journals')"><span data-i18n="view_all">عرض الكل</span> <i class="ti ti-arrow-left"></i></button>
     </div>
     <div class="tbl-wrap">
       <table>
         <thead><tr>
-          <th>التاريخ</th><th>الحساب</th><th>الطرف</th>
-          <th style="width:110px">مدين</th><th style="width:110px">دائن</th>
+          <th data-i18n="th_date">التاريخ</th><th data-i18n="th_account">الحساب</th><th data-i18n="th_party">الطرف</th>
+          <th style="width:110px" data-i18n="th_debit">مدين</th><th style="width:110px" data-i18n="th_credit">دائن</th>
         </tr></thead>
-        <tbody id="dash-recent"><tr><td colspan="5" class="empty"><p>جاري التحميل...</p></td></tr></tbody>
+        <tbody id="dash-recent"><tr><td colspan="5" class="empty"><p data-i18n="loading">جاري التحميل...</p></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -1229,12 +1243,12 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 /* ═══════════════════════════════════════
    HELPERS
 ════════════════════════════════════════ */
-function fmt(n) { return Number(n || 0).toLocaleString('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmt(n) { return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function fmtShort(n) {
   const v = Number(n || 0);
   if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
   if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
-  return v.toLocaleString();
+  return v.toLocaleString('en-US');
 }
 function dlBlob(blob, name) {
   const url = URL.createObjectURL(blob);
@@ -1323,9 +1337,14 @@ async function loadCashflowMonth(month) {
     document.getElementById('dash-debit').textContent = fmtShort(cf.total_outflow) + ' ر.س';
     document.getElementById('dash-net').textContent = (net >= 0 ? '+' : '') + fmtShort(net) + ' ر.س';
     document.getElementById('dash-net').style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
-    document.getElementById('cf-month-label').textContent = cf.month || '';
+    document.getElementById('cf-month-label').textContent = cf.is_all ? 'كل البيانات' : (cf.month || '');
 
-    renderCashFlowChart(cf.daily || []);
+    const picker = document.getElementById('cf-month-picker');
+    if (picker && !cf.is_all && cf.month) picker.value = cf.month;
+    const allBtn = document.getElementById('cf-all-btn');
+    if (allBtn) allBtn.classList.toggle('primary', !!cf.is_all);
+
+    renderCashFlowChart(cf.daily || [], cf.is_all);
 
     // Supplier Payments List (مع وسم التصنيف وملخص أعلى القائمة)
     const spList = document.getElementById('supplier-payments-list');
@@ -1339,7 +1358,7 @@ async function loadCashflowMonth(month) {
       </div>`;
     }
     if (!cf.suppliers || !cf.suppliers.length) {
-      html += '<div class="text-muted text-sm" style="padding:20px 0;text-align:center">لا توجد سدادات خلال هذا الشهر</div>';
+      html += '<div class="text-muted text-sm" style="padding:20px 0;text-align:center">لا توجد سدادات خلال هذه الفترة</div>';
     } else {
       html += cf.suppliers.map(s => `<div class="bank-bal-row">
         <div class="bank-bal-name">
@@ -1352,13 +1371,50 @@ async function loadCashflowMonth(month) {
       </div>`).join('');
     }
     spList.innerHTML = html;
+
+    // Customer Collections List
+    const ccList = document.getElementById('customer-collections-list');
+    if (!cf.customers || !cf.customers.length) {
+      ccList.innerHTML = '<div class="text-muted text-sm" style="padding:20px 0;text-align:center">لا توجد تحصيلات خلال هذه الفترة</div>';
+    } else {
+      ccList.innerHTML = cf.customers.map(c => `<div class="bank-bal-row">
+        <div class="bank-bal-name">
+          <i class="ti ti-user-circle text-muted"></i>${c.entity_name}
+          <span class="text-xs text-muted">(${c.count} عملية)</span>
+        </div>
+        <div class="bank-bal-amt text-green">${fmt(c.total)} ر.س</div>
+      </div>`).join('');
+    }
+
+    // Duplicate Day Warning
+    const dupBanner = document.getElementById('dup-warning-banner');
+    if (cf.duplicates && cf.duplicates.length) {
+      dupBanner.style.display = 'block';
+      dupBanner.innerHTML = `<div class="card" style="margin-bottom:0;border-color:var(--amber,#d4a017);background:rgba(212,160,23,.08)">
+        <div class="card-hdr">
+          <div class="card-title" style="color:var(--amber,#d4a017)"><i class="ti ti-alert-triangle"></i>تنبيه: احتمال قيود مكررة (${cf.duplicates.length})</div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);line-height:2">
+          ${cf.duplicates.slice(0, 10).map(d => `<div>
+            <span class="badge muted text-xs">${d.date}</span>
+            تكرر ${d.count} مرات بنفس المبلغ ${fmt(d.amount)} ر.س —
+            <span class="text-muted">${(d.memo || '').substring(0, 60)}</span>
+            <span class="text-xs text-muted">(أرقام القيود: ${d.journal_nos.join('، ')})</span>
+          </div>`).join('')}
+          ${cf.duplicates.length > 10 ? `<div class="text-muted text-xs">+ ${cf.duplicates.length - 10} حالة أخرى</div>` : ''}
+        </div>
+      </div>`;
+    } else {
+      dupBanner.style.display = 'none';
+      dupBanner.innerHTML = '';
+    }
   } catch (e) { console.error(e); }
 }
 
-function renderCashFlowChart(daily) {
+function renderCashFlowChart(daily, isAll) {
   const wrap = document.getElementById('cf-chart');
   if (!daily || !daily.length) {
-    wrap.innerHTML = '<div class="text-muted text-sm" style="padding:20px 0">لا توجد بيانات كافية للرسم البياني لهذا الشهر</div>';
+    wrap.innerHTML = '<div class="text-muted text-sm" style="padding:20px 0">لا توجد بيانات كافية للرسم البياني</div>';
     return;
   }
   const maxVal = Math.max(...daily.map(d => Math.max(d.inflow || 0, d.outflow || 0)), 1);
@@ -2469,7 +2525,74 @@ async function exportAllExcel() {
   showNotif('جاري تحميل Excel...', 'info');
 }
 
+/* ═══════════════════════════════════════
+   LANGUAGE TOGGLE (AR / EN)
+════════════════════════════════════════ */
+const I18N = {
+  sec_main:        { ar: 'الرئيسية', en: 'Main' },
+  nav_dashboard:    { ar: 'لوحة التحكم', en: 'Dashboard' },
+  sec_data:         { ar: 'إدارة البيانات', en: 'Data Management' },
+  nav_accounts:     { ar: 'شجرة الحسابات', en: 'Chart of Accounts' },
+  nav_suppliers:    { ar: 'الموردين', en: 'Suppliers' },
+  nav_customers:    { ar: 'العملاء', en: 'Customers' },
+  nav_expenses:     { ar: 'بنود المصروفات', en: 'Expense Items' },
+  nav_locations:    { ar: 'المواقع', en: 'Locations' },
+  nav_banks:        { ar: 'البنوك', en: 'Banks' },
+  nav_master:       { ar: 'البيانات الموحدة', en: 'Master Data' },
+  sec_ops:          { ar: 'العمليات', en: 'Operations' },
+  nav_upload:       { ar: 'رفع كشف البنك', en: 'Upload Bank Statement' },
+  nav_review:       { ar: 'مراجعة القيود', en: 'Review Entries' },
+  nav_journals:     { ar: 'سجل القيود', en: 'Journal History' },
+  kpi_accounts:     { ar: 'شجرة الحسابات', en: 'Chart of Accounts' },
+  kpi_accounts_sub: { ar: 'حساب مسجّل', en: 'accounts registered' },
+  kpi_suppliers:    { ar: 'الموردين', en: 'Suppliers' },
+  kpi_suppliers_sub:{ ar: 'مورد نشط', en: 'active suppliers' },
+  kpi_customers:    { ar: 'العملاء', en: 'Customers' },
+  kpi_customers_sub:{ ar: 'عميل نشط', en: 'active customers' },
+  kpi_expenses:     { ar: 'بنود المصروفات', en: 'Expense Items' },
+  kpi_expenses_sub: { ar: 'قاعدة مطابقة', en: 'matching rules' },
+  cf_title:         { ar: 'التدفق النقدي', en: 'Cash Flow' },
+  cf_all_data:      { ar: 'كل البيانات', en: 'All Data' },
+  loading:          { ar: 'جاري التحميل...', en: 'Loading...' },
+  total_inflow:     { ar: 'إجمالي الإيداعات', en: 'Total Inflows' },
+  total_outflow:    { ar: 'إجمالي المسحوبات', en: 'Total Outflows' },
+  net_flow:         { ar: 'صافي التدفق', en: 'Net Cash Flow' },
+  bank_balances:    { ar: 'أرصدة الحسابات البنكية', en: 'Bank Account Balances' },
+  banks_supported:  { ar: 'يدعم: بنك الأهلي السعودي · بنك الإنماء · بنك الرياض', en: 'Supports: AlAhli · Alinma · Riyad Bank' },
+  top_expenses:     { ar: 'أكبر بنود المصروفات', en: 'Top Expense Items' },
+  customers_collections: { ar: 'العملاء والتحصيلات', en: 'Customers & Collections' },
+  suppliers_payments: { ar: 'الموردين والسدادات', en: 'Suppliers & Payments' },
+  recent_journals:  { ar: 'آخر القيود المرحّلة', en: 'Recent Journal Entries' },
+  view_all:         { ar: 'عرض الكل', en: 'View All' },
+  th_date:          { ar: 'التاريخ', en: 'Date' },
+  th_account:       { ar: 'الحساب', en: 'Account' },
+  th_party:         { ar: 'الطرف', en: 'Party' },
+  th_debit:         { ar: 'مدين', en: 'Debit' },
+  th_credit:        { ar: 'دائن', en: 'Credit' },
+};
+
+let CURRENT_LANG = 'ar';
+
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    const entry = I18N[key];
+    if (entry) el.textContent = entry[CURRENT_LANG] || entry.ar;
+  });
+}
+
+function toggleLang() {
+  CURRENT_LANG = CURRENT_LANG === 'ar' ? 'en' : 'ar';
+  document.documentElement.lang = CURRENT_LANG;
+  document.documentElement.dir = CURRENT_LANG === 'ar' ? 'rtl' : 'ltr';
+  document.getElementById('lang-toggle-lbl').textContent = CURRENT_LANG === 'ar' ? 'EN' : 'AR';
+  applyI18n();
+  // أعد رسم الشاشة الحالية لتحديث أي نصوص ديناميكية ذات صلة بالفلاتر/البطاقات
+  refreshPage();
+}
+
 // ── INIT ──
+applyI18n();
 loadDashboard();
 loadAccountOptions().then(() => { renderBanks(); });
 </script>
