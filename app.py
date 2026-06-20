@@ -1030,55 +1030,86 @@ def api_locations_update(item_id):
 @app.route('/api/dashboard/cashflow')
 def api_cashflow():
     """
-    التدفق النقدي اليومي لشهر محدد (مع supplier breakdown).
-    query param: month=YYYY-MM (افتراضي: الشهر الحالي)
+    التدفق النقدي لشهر محدد، أو لكل البيانات لو month=all أو لو لا توجد بيانات
+    في الشهر الحالي (يعرض كل البيانات تلقائياً في هذه الحالة).
     يُحسب فقط من سطور حسابات البنوك (Cash/Bank accounts)، لأن أي قيد متوازن
     بالتعريف، فحساب التدفق من إجمالي مدين/دائن الجدول كله يساوي بينهما دائماً
     وهذا غير صحيح لتحليل الكاش فلو. على حساب البنك: مدين = تدفق داخل (إيداع)،
     دائن = تدفق خارج (مسحوبات).
     """
     month = request.args.get('month', '').strip()
-    if not month:
-        month = datetime.date.today().strftime('%Y-%m')
+    show_all = (month == 'all')
 
     bank_codes = [acc.split(' - ')[0] for acc in get_bank_accounts().values()]
     placeholders = ','.join('?' * len(bank_codes))
     conn = get_conn()
 
-    # تدفق يومي خلال الشهر المحدد
-    daily = pd.read_sql_query(f"""
-        SELECT journal_date as day,
-               SUM(CASE WHEN debit > 0 THEN debit ELSE 0 END) as inflow,
-               SUM(CASE WHEN credit > 0 THEN credit ELSE 0 END) as outflow
-        FROM journals
-        WHERE strftime('%Y-%m', journal_date) = ?
-          AND account_code IN ({placeholders})
-        GROUP BY journal_date ORDER BY journal_date
-    """, conn, params=[month] + bank_codes)
+    if not show_all and not month:
+        month = datetime.date.today().strftime('%Y-%m')
+        # لو الشهر الحالي مفيهوش بيانات، اعرض كل البيانات بدل شاشة فاضية
+        check = conn.execute(
+            "SELECT COUNT(*) c FROM journals WHERE strftime('%Y-%m', journal_date)=?", (month,)
+        ).fetchone()
+        if check['c'] == 0:
+            show_all = True
 
-    # إجمالي الشهر
+    date_filter_sql = "" if show_all else "AND strftime('%Y-%m', journal_date) = ?"
+    date_params = [] if show_all else [month]
+
+    # تدفق يومي (أو شهري لو عرض كل البيانات)
+    if show_all:
+        daily = pd.read_sql_query(f"""
+            SELECT journal_date as day,
+                   SUM(CASE WHEN debit > 0 THEN debit ELSE 0 END) as inflow,
+                   SUM(CASE WHEN credit > 0 THEN credit ELSE 0 END) as outflow
+            FROM journals
+            WHERE account_code IN ({placeholders})
+            GROUP BY journal_date ORDER BY journal_date
+        """, conn, params=bank_codes)
+    else:
+        daily = pd.read_sql_query(f"""
+            SELECT journal_date as day,
+                   SUM(CASE WHEN debit > 0 THEN debit ELSE 0 END) as inflow,
+                   SUM(CASE WHEN credit > 0 THEN credit ELSE 0 END) as outflow
+            FROM journals
+            WHERE strftime('%Y-%m', journal_date) = ?
+              AND account_code IN ({placeholders})
+            GROUP BY journal_date ORDER BY journal_date
+        """, conn, params=[month] + bank_codes)
+
     totals_row = conn.execute(f"""
         SELECT COALESCE(SUM(CASE WHEN debit>0 THEN debit ELSE 0 END),0) inflow,
                COALESCE(SUM(CASE WHEN credit>0 THEN credit ELSE 0 END),0) outflow
         FROM journals
-        WHERE strftime('%Y-%m', journal_date) = ?
+        WHERE 1=1 {date_filter_sql}
           AND account_code IN ({placeholders})
-    """, [month] + bank_codes).fetchone()
+    """, date_params + bank_codes).fetchone()
 
-    # السدادات حسب المورد/الجهة خلال الشهر (من سطور المدين على حسابات غير البنك، أي ما تم صرفه)
+    # الموردين: السدادات (مدين على حسابات غير البنك)
     supplier_rows = conn.execute(f"""
         SELECT entity_name, SUM(debit) total, COUNT(DISTINCT journal_no) cnt,
                GROUP_CONCAT(DISTINCT memo) memos
         FROM journals
-        WHERE strftime('%Y-%m', journal_date) = ?
+        WHERE 1=1 {date_filter_sql}
           AND debit > 0 AND account_code NOT IN ({placeholders})
           AND entity_name IS NOT NULL AND entity_name != ''
         GROUP BY entity_name ORDER BY total DESC
-    """, [month] + bank_codes).fetchall()
+    """, date_params + bank_codes).fetchall()
+
+    # العملاء: التحصيلات (دائن على حسابات غير البنك، أي ما تم تحصيله من عميل)
+    customer_rows = conn.execute(f"""
+        SELECT entity_name, SUM(credit) total, COUNT(DISTINCT journal_no) cnt,
+               GROUP_CONCAT(DISTINCT memo) memos
+        FROM journals
+        WHERE 1=1 {date_filter_sql}
+          AND credit > 0 AND account_code NOT IN ({placeholders})
+          AND entity_name IS NOT NULL AND entity_name != ''
+          AND memo LIKE 'Collection From%'
+        GROUP BY entity_name ORDER BY total DESC
+    """, date_params + bank_codes).fetchall()
 
     invoice_re = re.compile(r'(?:رقم|Bill|Invoice|فاتورة)\s*[:#]?\s*([A-Za-z0-9\-/]+)', re.IGNORECASE)
 
-    # تصنيف خاص: كهرباء / اتصالات / حكومي (للعرض كوسم بجانب اسم المورد)
     categories = {'كهرباء': ['ELECTRIC', 'كهرباء', 'SEC'],
                   'اتصالات': ['STC', 'MOBILY', 'ZAIN', 'اتصالات'],
                   'حكومي': ['GOSI', 'GOVERNMENT', 'MOL', 'حكوم', 'DIWAN', 'IQAMA']}
@@ -1107,14 +1138,42 @@ def api_cashflow():
             'category': cat,
         })
 
+    customers = [{
+        'entity_name': r['entity_name'],
+        'total': float(r['total']),
+        'count': r['cnt'],
+    } for r in customer_rows]
+
+    # كشف الأيام المكررة: نفس اليوم فيه أكثر من قيد بنفس (المبلغ + البيان) — مؤشر احتمال رفع كشف مرتين
+    dup_rows = conn.execute(f"""
+        SELECT journal_date, memo, debit, credit, COUNT(*) cnt,
+               GROUP_CONCAT(DISTINCT journal_no) journal_nos
+        FROM journals
+        WHERE 1=1 {date_filter_sql}
+          AND account_code IN ({placeholders})
+        GROUP BY journal_date, memo, debit, credit
+        HAVING COUNT(DISTINCT journal_no) > 1
+        ORDER BY journal_date DESC
+    """, date_params + bank_codes).fetchall()
+    duplicates = [{
+        'date': r['journal_date'],
+        'memo': r['memo'],
+        'amount': float(r['debit'] or r['credit'] or 0),
+        'count': r['cnt'],
+        'journal_nos': (r['journal_nos'] or '').split(','),
+    } for r in dup_rows]
+
     conn.close()
     return jsonify({
-        'month': month,
+        'month': 'all' if show_all else month,
+        'is_all': show_all,
         'daily': daily.to_dict('records'),
         'total_inflow': float(totals_row['inflow']),
         'total_outflow': float(totals_row['outflow']),
         'suppliers': suppliers,
+        'customers': customers,
         'category_totals': category_totals,
+        'duplicates': duplicates,
     })
 
 # ══════════════════════════════════════════════════════════════
